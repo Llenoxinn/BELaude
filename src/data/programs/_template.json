@@ -1,0 +1,22 @@
+{
+  "campus": "UP Cebu",
+  "campusId": "upc",
+  "programs": [
+    {
+      "id": "example-program",
+      "name": "Example: BS Something (copy this, do not ship it)",
+      "college": "College name",
+      "curriculum": "2018 Curriculum, effective 1st sem AY 2018-19",
+      "totalUnits": 39,
+      "note": "Optional: anything students should know about this data.",
+      "source": "https://link-to-the-official-study-plan.pdf",
+      "retrievedOn": "YYYY-MM-DD",
+      "verifiedBy": "Name or GitHub handle of the person who checked it",
+      "semesters": [
+        { "label": "1st year, 1st sem", "kind": "regular", "units": 18 },
+        { "label": "1st year, 2nd sem", "kind": "regular", "units": 18, "courses": [{ "code": "ABC 199", "units": 3 }] },
+        { "label": "1st year, Midyear", "kind": "midyear", "units": 3 }
+      ]
+    }
+  ]
+}

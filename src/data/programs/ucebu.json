@@ -1,0 +1,684 @@
+{
+  "campus": "UP Cebu",
+  "campusId": "upc",
+  "programs": [
+    {
+      "id": "bs-biology",
+      "name": "BS Biology",
+      "college": "College of Science",
+      "curriculum": "2018 Curriculum (approved 2017 Oct 18), effective 1st sem AY 2018-19",
+      "totalUnits": 143,
+      "note": "The last semester is 15 to 16 units depending on your major elective, so the total is 143 to 144. BELaude uses 15 and 143; change it in the Grades step if yours is 4 units.",
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-biology.pdf",
+      "retrievedOn": "2026-10-31",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 15
+        }
+      ]
+    },
+    {
+      "id": "ba-communication",
+      "name": "BA Communication",
+      "college": "College of Communication, Art, and Design",
+      "curriculum": "2018 Curriculum, effective 1st sem AY 2018-19",
+      "totalUnits": 144,
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-communication.pdf",
+      "retrievedOn": "2026-10-31",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 21
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 18,
+          "courses": [
+            {
+              "code": "COMM 199.1",
+              "units": 3
+            }
+          ]
+        },
+        {
+          "label": "3rd year, Midyear",
+          "kind": "midyear",
+          "units": 3
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 15,
+          "courses": [
+            {
+              "code": "COMM 199.2",
+              "units": 3
+            }
+          ]
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 15
+        }
+      ]
+    },
+    {
+      "id": "bs-computer-science",
+      "name": "BS Computer Science",
+      "college": "College of Science",
+      "curriculum": "2018 Curriculum, effective 1st sem AY 2018-19",
+      "totalUnits": 155,
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-computer-science.pdf",
+      "retrievedOn": "2026-10-31",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 20
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 21
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 20
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 20
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "3rd year, Midyear",
+          "kind": "midyear",
+          "units": 3
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 17
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 17
+        }
+      ]
+    },
+    {
+      "id": "bfa-product-design",
+      "name": "BFA Product Design",
+      "college": "College of Communication, Art, and Design",
+      "curriculum": "2018 Curriculum, effective 1st sem AY 2018-19",
+      "totalUnits": 147,
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-fine-arts-product-design.pdf",
+      "retrievedOn": "2026-10-31",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, Midyear",
+          "kind": "midyear",
+          "units": 3
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 18,
+          "courses": [
+            {
+              "code": "D 199.1",
+              "units": 3
+            }
+          ]
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 18,
+          "courses": [
+            {
+              "code": "D 199.2",
+              "units": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bfa-studio-arts",
+      "name": "BFA Studio Arts",
+      "college": "College of Communication, Art, and Design",
+      "curriculum": "2018 Curriculum, effective 1st sem AY 2018-19",
+      "totalUnits": 147,
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-fine-arts-studio-arts.pdf",
+      "retrievedOn": "2026-10-31",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, Midyear",
+          "kind": "midyear",
+          "units": 3
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 18,
+          "courses": [
+            {
+              "code": "SFA 199.1",
+              "units": 3
+            }
+          ]
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 18,
+          "courses": [
+            {
+              "code": "SFA 199.2",
+              "units": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bs-management-finance",
+      "name": "BS Management, Minor in Finance",
+      "college": "School of Management",
+      "curriculum": "2021 Curriculum (corrected 2024 Nov 14), effective 2nd sem, January 2025",
+      "totalUnits": 148,
+      "statedTotalUnits": 145,
+      "note": "The study plan states 145 total units, but its semesters add up to 148. BELaude uses 148; check the total with your adviser.",
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-management-finance.pdf",
+      "retrievedOn": "2026-10-31",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, Midyear",
+          "kind": "midyear",
+          "units": 3
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 18,
+          "courses": [
+            {
+              "code": "MGT 199",
+              "units": 3
+            }
+          ]
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        }
+      ]
+    },
+    {
+      "id": "bs-management-marketing",
+      "name": "BS Management, Minor in Marketing",
+      "college": "School of Management",
+      "curriculum": "2021 Curriculum (corrected 2024 Nov 14), effective 2nd sem, January 2025",
+      "totalUnits": 148,
+      "statedTotalUnits": 145,
+      "note": "The study plan states 145 total units, but its semesters add up to 148. BELaude uses 148; check the total with your adviser.",
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-management-marketing.pdf",
+      "retrievedOn": "2026-10-31",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, Midyear",
+          "kind": "midyear",
+          "units": 3
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 18,
+          "courses": [
+            {
+              "code": "MGT 199",
+              "units": 3
+            }
+          ]
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        }
+      ]
+    },
+    {
+      "id": "bs-mathematics",
+      "name": "BS Mathematics",
+      "college": "College of Science",
+      "curriculum": "2018 Curriculum, effective 1st sem AY 2018-19",
+      "totalUnits": 150,
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-mathematics.pdf",
+      "retrievedOn": "2026-10-31",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 20
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 20
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 17
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        }
+      ]
+    },
+    {
+      "id": "ba-political-science",
+      "name": "BA Political Science",
+      "college": "College of Social Sciences",
+      "curriculum": "2018 Curriculum, effective 1st sem AY 2018-19",
+      "totalUnits": 144,
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-political-science.pdf",
+      "retrievedOn": "2026-10-31",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 18,
+          "courses": [
+            {
+              "code": "PS 199.1",
+              "units": 3
+            }
+          ]
+        },
+        {
+          "label": "3rd year, Midyear",
+          "kind": "midyear",
+          "units": 3
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 18,
+          "courses": [
+            {
+              "code": "PS 199.2",
+              "units": 3
+            }
+          ]
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 15
+        }
+      ]
+    },
+    {
+      "id": "ba-psychology",
+      "name": "BA Psychology",
+      "college": "College of Social Sciences",
+      "curriculum": "2018 Curriculum, effective 1st sem AY 2018-19",
+      "totalUnits": 142,
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-psychology.pdf",
+      "retrievedOn": "2026-10-31",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 17
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 15
+        },
+        {
+          "label": "3rd year, Midyear",
+          "kind": "midyear",
+          "units": 3
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 16
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 17
+        }
+      ]
+    },
+    {
+      "id": "bs-statistics",
+      "name": "BS Statistics",
+      "college": "College of Science",
+      "curriculum": "Curriculum approved by the Board of Regents in 2021",
+      "totalUnits": 140,
+      "note": "2nd year, 1st sem is 18 or 19 units depending on your elective (3 or 4 units). BELaude uses 18; change it in the Grades step if needed.",
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-statistics.pdf",
+      "retrievedOn": "2026-10-31",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 17
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 17
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 16
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 17
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "thresholdsCheckedOn": "2026-10-31",
+  "registrarVerifiedOn": null,
+  "sources": [
+    {
+      "label": "UP Visayas graduation requirements",
+      "url": "https://our.upv.edu.ph/index.php/academics/graduation/graduation-requirements"
+    },
+    {
+      "label": "UP Cebu Office of the University Registrar",
+      "url": "https://our.upcebu.edu.ph"
+    }
+  ],
+  "gwa": {
+    "decimals": 4,
+    "rounding": "round"
+  },
+  "latinHonors": [
+    {
+      "id": "summa",
+      "name": "Summa cum laude",
+      "short": "Summa",
+      "maxGwa": 1.2
+    },
+    {
+      "id": "magna",
+      "name": "Magna cum laude",
+      "short": "Magna",
+      "maxGwa": 1.45
+    },
+    {
+      "id": "cum",
+      "name": "Cum laude",
+      "short": "Cum laude",
+      "maxGwa": 1.75
+    }
+  ],
+  "stretchMaxRequired": 1.1,
+  "regularLoadUnits": 15,
+  "semestralStanding": {
+    "verified": false,
+    "tiers": [
+      {
+        "id": "university",
+        "name": "University Scholar",
+        "maxGwa": 1.45
+      },
+      {
+        "id": "college",
+        "name": "College Scholar",
+        "maxGwa": 1.75
+      },
+      {
+        "id": "honor-roll",
+        "name": "Honor Roll",
+        "maxGwa": 2.0
+      }
+    ]
+  },
+  "excluded": {
+    "coursePatterns": [
+      {
+        "pattern": "^NSTP",
+        "label": "NSTP"
+      },
+      {
+        "pattern": "^P\\.?\\s?E\\.?(\\s|\\d|$)",
+        "label": "PE"
+      },
+      {
+        "pattern": "^HK(\\s|\\d|$)",
+        "label": "HK"
+      },
+      {
+        "pattern": "RESIDENCY",
+        "label": "Residency"
+      }
+    ],
+    "courseNumbers": [
+      199,
+      299,
+      399
+    ],
+    "qualitativeGrades": [
+      "P",
+      "F",
+      "S",
+      "U"
+    ],
+    "verified": false
+  },
+  "thesisCourseNumbers": [
+    190,
+    200,
+    300,
+    400
+  ],
+  "failingGrades": [
+    "4.00",
+    "5.00",
+    "F"
+  ]
+}
