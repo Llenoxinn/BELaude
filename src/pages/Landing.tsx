@@ -82,10 +82,8 @@ export function Landing() {
         </div>
       </section>
 
-      <HowItWorks />
-
       {/* Why BELaude: one asymmetric bento */}
-      <section aria-labelledby="why" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-32">
+      <section aria-labelledby="why" className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 md:pb-24">
         <Reveal>
           <h2 id="why" className="max-w-[24ch] text-[2.25rem]">
             <span className="block">Other calculators look back.</span> <span className="block">This one looks forward.</span>
@@ -125,24 +123,25 @@ export function Landing() {
         </div>
       </section>
 
-      {/* Honors thresholds */}
-      <section aria-labelledby="thresholds" className="mx-auto max-w-4xl px-4 py-20 sm:px-6 md:py-32">
-        <Reveal>
-          <h2 id="thresholds" className="text-[2.25rem]">
-            Latin honors in UP
-          </h2>
-          <p className="mt-3 max-w-[60ch] text-muted-foreground">
+      <HowItWorks />
+
+      <Section
+        id="thresholds"
+        title="Latin honors in UP"
+        intro={
+          <>
             Your <Term tip={GLOSSARY.GWA}>GWA</Term> at graduation decides the tier. It is compared at 4 decimal places, so
             1.4501 is cum laude, not magna.
-          </p>
-        </Reveal>
-        <table className="mt-10 w-full text-left">
+          </>
+        }
+      >
+        <table className="w-full text-left">
           <thead>
             <tr className="border-b border-border">
-              <th scope="col" className="meta-label py-3 font-normal">
+              <th scope="col" className="meta-label pb-3 font-normal">
                 Honor
               </th>
-              <th scope="col" className="meta-label py-3 text-right font-normal">
+              <th scope="col" className="meta-label pb-3 text-right font-normal">
                 GWA range
               </th>
             </tr>
@@ -156,33 +155,28 @@ export function Landing() {
             ))}
           </tbody>
         </table>
-      </section>
+      </Section>
 
       <Faq />
 
       {/* The developer's note: honors are a number, not the measure of an education */}
-      <section aria-labelledby="note" className="mx-auto max-w-3xl px-4 pb-20 sm:px-6 md:pb-32">
-        <Reveal>
-          <h2 id="note" className="text-[2.25rem]">
-            A note from the developer
-          </h2>
-          <div className="mt-6 max-w-[62ch] space-y-4 text-muted-foreground">
-            <p>
-              BELaude is a small side project. It does the arithmetic behind Latin honors, but it doesn’t claim that a GWA
-              measures your education, or that honors are the point of being in UP.
-            </p>
-            <p>
-              Learn because you want to understand, not just for the number. Don’t trade your health, your sleep or the
-              people you care about for a cutoff. No laude is worth that.
-            </p>
-          </div>
-          <p className="mt-8 max-w-[44ch] font-serif text-2xl leading-snug text-balance">
-            And if you do graduate with one, it doesn’t put you above anyone. It’s one more reason to serve the people.
+      <Section id="note" title="A note from the developer" divider>
+        <div className="max-w-[62ch] space-y-4 text-muted-foreground">
+          <p>
+            BELaude is a small side project. It does the arithmetic behind Latin honors, but it doesn’t claim that a GWA
+            measures your education, or that honors are the point of being in UP.
           </p>
-        </Reveal>
-      </section>
+          <p>
+            Learn because you want to understand, not just for the number. Don’t trade your health, your sleep or the people
+            you care about for a cutoff. No laude is worth that.
+          </p>
+        </div>
+        <p className="mt-8 max-w-[40ch] font-serif text-2xl leading-snug text-balance">
+          And if you do graduate with one, it doesn’t put you above anyone. It’s one more reason to serve the people.
+        </p>
+      </Section>
 
-      <section aria-labelledby="cta" className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
+      <section aria-labelledby="cta" className="mx-auto max-w-6xl px-4 pt-8 pb-8 sm:px-6">
         <Reveal className="grid gap-8 border-t border-foreground pt-12 md:grid-cols-[1fr_auto] md:items-end md:gap-16 md:pt-16">
           <h2 id="cta" className="max-w-[18ch] text-[2.5rem] sm:text-[3.5rem]">
             See what your next semester needs.
@@ -202,7 +196,7 @@ export function Landing() {
 function HowItWorks() {
   return (
     <section id="how" aria-labelledby="how-title" className="border-y border-border bg-surface-alt">
-      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-32">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-24">
         <Reveal>
           <h2 id="how-title" className="text-[2.25rem]">
             Your roadmap in about a minute
@@ -330,13 +324,8 @@ function Faq() {
     },
   ]
   return (
-    <section id="faq" aria-labelledby="faq-title" className="mx-auto max-w-3xl px-4 py-20 sm:px-6 md:py-32">
-      <Reveal>
-        <h2 id="faq-title" className="text-[2.25rem]">
-          Questions students ask
-        </h2>
-      </Reveal>
-      <div className="faq mt-8 border-t border-border">
+    <Section id="faq" title="Questions students ask" divider>
+      <div className="faq border-t border-border">
         {items.map((item) => (
           <details key={item.q} className="group border-b border-border">
             <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-lead font-medium transition-colors duration-150 hover:text-up-maroon [&::-webkit-details-marker]:hidden">
@@ -349,6 +338,26 @@ function Faq() {
             <div className="max-w-[65ch] pb-5 text-body-sm text-muted-foreground">{item.a}</div>
           </details>
         ))}
+      </div>
+    </Section>
+  )
+}
+
+/**
+ * The reference sections share one grid: heading on the left, content on the right, on the same
+ * container as the hero, so every section starts at the same edge.
+ */
+function Section({ id, title, intro, divider, children }: { id: string; title: string; intro?: ReactNode; divider?: boolean; children: ReactNode }) {
+  return (
+    <section id={id} aria-labelledby={`${id}-title`} className="mx-auto max-w-6xl px-4 sm:px-6">
+      <div className={cn('grid gap-8 py-16 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-16 md:py-24', divider && 'border-t border-border')}>
+        <Reveal className="md:sticky md:top-24 md:self-start">
+          <h2 id={`${id}-title`} className="text-[2.25rem]">
+            {title}
+          </h2>
+          {intro && <p className="mt-3 max-w-[40ch] text-muted-foreground">{intro}</p>}
+        </Reveal>
+        <div>{children}</div>
       </div>
     </section>
   )
