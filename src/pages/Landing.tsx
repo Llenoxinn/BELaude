@@ -160,6 +160,28 @@ export function Landing() {
 
       <Faq />
 
+      {/* The developer's note: honors are a number, not the measure of an education */}
+      <section aria-labelledby="note" className="mx-auto max-w-3xl px-4 pb-20 sm:px-6 md:pb-32">
+        <Reveal>
+          <h2 id="note" className="text-[2.25rem]">
+            A note from the developer
+          </h2>
+          <div className="mt-6 max-w-[62ch] space-y-4 text-muted-foreground">
+            <p>
+              BELaude is a small side project. It does the arithmetic behind Latin honors, but it doesn’t claim that a GWA
+              measures your education, or that honors are the point of being in UP.
+            </p>
+            <p>
+              Learn because you want to understand, not just for the number. Don’t trade your health, your sleep or the
+              people you care about for a cutoff. No laude is worth that.
+            </p>
+          </div>
+          <p className="mt-8 max-w-[44ch] font-serif text-2xl leading-snug text-balance">
+            And if you do graduate with one, it doesn’t put you above anyone. It’s one more reason to serve the people.
+          </p>
+        </Reveal>
+      </section>
+
       <section aria-labelledby="cta" className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
         <Reveal className="grid gap-8 border-t border-foreground pt-12 md:grid-cols-[1fr_auto] md:items-end md:gap-16 md:pt-16">
           <h2 id="cta" className="max-w-[18ch] text-[2.5rem] sm:text-[3.5rem]">
