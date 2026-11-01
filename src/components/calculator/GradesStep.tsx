@@ -95,17 +95,20 @@ export function GradesStep({ onBack, onNext }: { onBack: () => void; onNext: () 
           Finished
         </GroupTitle>
         {done.length ? (
-          done.map((sem) => (
-            <SemesterBlock
-              key={sem.id}
-              semester={sem}
-              issues={issues[sem.id]}
-              nudgeKey={tried}
-              onChange={(p) => patch(sem.id, p)}
-              onDone={(v) => setDone(sem, v)}
-              onRemove={() => remove(sem)}
-            />
-          ))
+          // Laptops: a year's two semesters side by side. Phones keep one column.
+          <div className="lg:grid lg:grid-cols-2 lg:gap-x-12">
+            {done.map((sem) => (
+              <SemesterBlock
+                key={sem.id}
+                semester={sem}
+                issues={issues[sem.id]}
+                nudgeKey={tried}
+                onChange={(p) => patch(sem.id, p)}
+                onDone={(v) => setDone(sem, v)}
+                onRemove={() => remove(sem)}
+              />
+            ))}
+          </div>
         ) : (
           <p className="border-b border-border py-6 text-body-sm text-muted-foreground">
             No finished semesters yet. Mark a semester Done once its grades are out.
@@ -122,7 +125,7 @@ export function GradesStep({ onBack, onNext }: { onBack: () => void; onNext: () 
             Enter the units each semester will count in your GWA. Keep at least a regular load: an underload can cost
             Latin honors.
           </p>
-          <ul className="mt-2">
+          <ul className="mt-2 lg:grid lg:grid-cols-2 lg:gap-x-12">
             {upcoming.map((sem) => (
               <UpcomingRow
                 key={sem.id}
@@ -231,7 +234,13 @@ function UpcomingRow({
   const label = semesterLabel(s)
   const id = `planned-${s.id}`
   return (
-    <li id={`sem-${s.id}`} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 border-b border-border py-4 sm:grid-cols-[1fr_9rem_auto]">
+    <li
+      id={`sem-${s.id}`}
+      className={cn(
+        'grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 border-b border-border py-4 sm:grid-cols-[1fr_9rem_auto]',
+        s.term === 1 && 'lg:col-start-1',
+      )}
+    >
       <div>
         <h3 className="text-lg leading-tight">{label}</h3>
         {s.yearLabel && <p className="text-caption text-muted-foreground">{s.yearLabel}</p>}
@@ -289,7 +298,8 @@ function SemesterBlock({
   const ids = { gwa: `gwa-${s.id}`, units: `units-${s.id}` }
 
   return (
-    <section id={`sem-${s.id}`} aria-labelledby={`sem-${s.id}-title`} className="border-b border-border py-6">
+    // A 1st sem always starts a row, so a midyear never pushes the next year out of its pair
+    <section id={`sem-${s.id}`} aria-labelledby={`sem-${s.id}-title`} className={cn('border-b border-border py-6', s.term === 1 && 'lg:col-start-1')}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 id={`sem-${s.id}-title`} className="text-xl">

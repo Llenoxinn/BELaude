@@ -6,6 +6,7 @@ import { ResultsView } from '@/components/calculator/Results'
 import { Stepper } from '@/components/calculator/Stepper'
 import { buildSemesters } from '@/lib/state'
 import { useStore } from '@/lib/store'
+import { cn } from '@/lib/utils'
 import { maxStep } from '@/lib/validate'
 import { useEffect, useRef } from 'react'
 
@@ -29,8 +30,11 @@ export function Calculator() {
   }
 
   return (
-    <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 pt-8 sm:px-6 sm:pt-12">
-      <Stepper current={step} max={max} onSelect={go} />
+    // The grades step widens on laptops so two semesters fit side by side
+    <main id="main" tabIndex={-1} className={cn('mx-auto max-w-3xl px-4 pt-8 sm:px-6 sm:pt-12', step === 2 && 'lg:max-w-6xl')}>
+      <div className="mx-auto max-w-3xl">
+        <Stepper current={step} max={max} onSelect={go} />
+      </div>
       <div key={step} className="step-in mt-8 sm:mt-10">
         {step === 0 && <ProgramStep onNext={() => go(1)} />}
         {step === 1 && <BatchStep onBack={() => go(0)} onNext={() => go(2)} />}
