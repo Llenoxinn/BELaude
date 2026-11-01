@@ -201,4 +201,38 @@ describe('unitsTally', () => {
     expect(t.sum).toBe(150)
     expect(t.matches).toBe(false)
   })
+  it.each([
+    ['a thesis S waiting for its final grade', 'CMSC 190-1', 'S'],
+    ['an INC without an expected grade', 'MATH 21', 'INC'],
+  ])('counts %s as finished', (_, code, grade) => {
+    const s = stateWith('1.50', '153')
+    const pending = blankSemester(2024, 2, now, {
+      status: 'done',
+      mode: 'courses',
+      courses: [{ id: 'c1', code, title: '', units: '3', grade, expectedGrade: '' }],
+    })
+    const t = unitsTally({ ...s, semesters: [...s.semesters, pending] })
+    expect(t.done).toBe(63)
+    expect(t.matches).toBe(true)
+  })
+})
+
+describe('batch year and imports', () => {
+  it('drops semesters from before a corrected batch year', () => {
+    const typo: AppState = { ...initialState, campusId: 'other', custom: { totalUnits: '150', semesters: '8' }, batchYear: '2021' }
+    const filled = buildSemesters(typo, now).map((x) => ({ ...x, gwa: '1.50', units: '18' }))
+    const fixed = buildSemesters({ ...typo, batchYear: '2025', semesters: filled }, now)
+    expect(fixed.every((x) => x.ay >= 2025)).toBe(true)
+    expect(fixed).toHaveLength(8)
+  })
+
+  it('reads a hand-edited backup with numbers where text is expected', () => {
+    const raw = JSON.parse(JSON.stringify(stateWith('1.50')))
+    raw.semesters[0].gwa = 1.5
+    raw.semesters[0].units = 60
+    raw.semesters[1].plannedUnits = 18
+    const r = computeResults(parseImport(JSON.stringify(raw)))
+    expect(r.errors).toEqual([])
+    expect(r.U).toBe(60)
+  })
 })

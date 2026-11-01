@@ -106,7 +106,7 @@ describe('course classification', () => {
   it('handles special grades', () => {
     expect(classifyCourse({ code: 'MATH 21', units: 3, grade: 'DRP' }).kind).toBe('excluded')
     expect(classifyCourse({ code: 'MATH 21', units: 3, grade: 'P' }).kind).toBe('excluded')
-    expect(classifyCourse({ code: 'MATH 21', units: 3, grade: 'INC' })).toEqual({ kind: 'pending', reason: 'inc' })
+    expect(classifyCourse({ code: 'MATH 21', units: 3, grade: 'INC' })).toEqual({ kind: 'pending', reason: 'inc', units: 3 })
     expect(classifyCourse({ code: 'MATH 21', units: 3, grade: 'INC', expectedGrade: '1.50' })).toEqual({
       kind: 'counted',
       grade: 1.5,

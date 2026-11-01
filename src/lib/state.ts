@@ -111,11 +111,9 @@ export function activeProgram(state: AppState): Program | null {
   return state.campusId === OTHER_CAMPUS || !state.programId ? null : findProgram(state.campusId, state.programId)
 }
 
-export function parseNumber(value: unknown): number | null {
-  // Imported backups can hold numbers or null where text is expected.
-  const text = String(value ?? '').trim()
-  if (text === '') return null
-  const n = Number(text)
+export function parseNumber(value: string): number | null {
+  if (value.trim() === '') return null
+  const n = Number(value)
   return Number.isFinite(n) ? n : null
 }
 
@@ -324,16 +322,34 @@ export function parseImport(text: string): AppState {
   return {
     ...initialState,
     ...data,
-    custom: { ...initialState.custom, ...data.custom },
+    batchYear: asText(data.batchYear),
+    officialGwa: asText(data.officialGwa),
+    custom: { totalUnits: asText(data.custom?.totalUnits), semesters: asText(data.custom?.semesters ?? initialState.custom.semesters) },
     semesters: data.semesters.map((s) => ({
       ...blankSemester(s.ay, s.term, new Date()),
       ...s,
+      // A hand-edited file may hold numbers where the form keeps text.
+      gwa: asText(s.gwa),
+      units: asText(s.units),
+      plannedUnits: asText(s.plannedUnits),
+      plannedGwa: asText(s.plannedGwa),
       // Older saves have no flags. Units are whole or half numbers, so a value like 19.38 was BELaude's guess.
-      unitsAuto: s.unitsAuto ?? notUnits(s.units),
-      plannedAuto: s.plannedAuto ?? notUnits(s.plannedUnits),
-      courses: (s.courses ?? []).map((c) => ({ ...c, expectedGrade: c.expectedGrade ?? '' })),
+      unitsAuto: s.unitsAuto ?? notUnits(asText(s.units)),
+      plannedAuto: s.plannedAuto ?? notUnits(asText(s.plannedUnits)),
+      courses: (s.courses ?? []).map((c) => ({
+        ...c,
+        code: asText(c.code),
+        title: asText(c.title),
+        units: asText(c.units),
+        grade: asText(c.grade),
+        expectedGrade: asText(c.expectedGrade),
+      })),
     })),
   }
+}
+
+function asText(value: unknown): string {
+  return value === null || value === undefined ? '' : String(value)
 }
 
 function notUnits(value: string | undefined): boolean {
