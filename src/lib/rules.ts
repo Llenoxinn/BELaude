@@ -102,7 +102,7 @@ export function classifyCourse(course: CourseInput, r: Rules = rules): CourseTre
     if (expected && NUMERIC_GRADES.includes(expected)) {
       return { kind: 'counted', grade: Number(expected), units, viaExpected: true }
     }
-    return { kind: 'pending', reason: 'inc' }
+    return { kind: 'pending', reason: 'inc', units }
   }
 
   if (grade === 'S' && isThesisCourse(course.code, r)) {

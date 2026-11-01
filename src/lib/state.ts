@@ -111,9 +111,11 @@ export function activeProgram(state: AppState): Program | null {
   return state.campusId === OTHER_CAMPUS || !state.programId ? null : findProgram(state.campusId, state.programId)
 }
 
-export function parseNumber(value: string): number | null {
-  if (value.trim() === '') return null
-  const n = Number(value)
+export function parseNumber(value: unknown): number | null {
+  // Imported backups can hold numbers or null where text is expected.
+  const text = String(value ?? '').trim()
+  if (text === '') return null
+  const n = Number(text)
   return Number.isFinite(n) ? n : null
 }
 
@@ -246,9 +248,10 @@ export function buildSemesters(state: AppState, now = new Date()): Semester[] {
       plannedAuto: units !== '',
     })
   })
-  // Kept semesters outside the plan get their year from this batch, not from an earlier one.
+  // Kept semesters outside the plan get their year from this batch, not from an earlier one. Anything
+  // before the batch year can't be real (a corrected typo in the year), so it goes.
   const kept = state.semesters
-    .filter((s) => !used.has(termKey(s.ay, s.term)) && (hasData(s) || s.extra))
+    .filter((s) => s.ay >= batch && !used.has(termKey(s.ay, s.term)) && (hasData(s) || s.extra))
     .map((s) => ({ ...s, yearLabel: yearLabelFor(s.ay, s.term, batch) }))
   return sortSemesters([...built, ...kept])
 }

@@ -54,11 +54,13 @@ export interface SemesterTotals extends Totals {
   /** Last numeric grade per thesis key, used to resolve S units from other terms. */
   thesisGrades: Record<string, number>
   pendingInc: number
+  /** Units of those INC courses, taken but not graded yet. */
+  pendingIncUnits: number
   invalid: number
 }
 
 export function semesterTotals(sem: SemesterInput, r: Rules = defaultRules): SemesterTotals {
-  const empty: SemesterTotals = { units: 0, points: 0, gwa: null, thesisS: [], thesisGrades: {}, pendingInc: 0, invalid: 0 }
+  const empty: SemesterTotals = { units: 0, points: 0, gwa: null, thesisS: [], thesisGrades: {}, pendingInc: 0, pendingIncUnits: 0, invalid: 0 }
   if (sem.mode === 'gwa') {
     if (sem.gwa === null || sem.units === null || sem.units <= 0) return empty
     return { ...empty, units: sem.units, points: sem.gwa * sem.units, gwa: sem.gwa }
@@ -74,6 +76,7 @@ export function semesterTotals(sem: SemesterInput, r: Rules = defaultRules): Sem
       out.thesisS.push({ key: t.thesisKey!, units: t.units! })
     } else if (t.kind === 'pending' && t.reason === 'inc') {
       out.pendingInc += 1
+      out.pendingIncUnits += t.units!
     } else if (t.kind === 'invalid') {
       out.invalid += 1
     }

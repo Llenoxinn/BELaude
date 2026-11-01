@@ -497,11 +497,19 @@ html[data-motion='reduce'] .reveal:not(.is-visible) {
 /* FAQ: native <details>. The height transitions (interruptible) where the browser supports it. */
 .faq details::details-content {
   block-size: 0;
+  opacity: 0;
   overflow-y: clip;
   transition:
-    block-size 250ms var(--ease-out),
-    content-visibility 250ms allow-discrete;
+    block-size 220ms var(--ease-out),
+    opacity 160ms ease-out,
+    content-visibility 220ms allow-discrete;
 }
 .faq details[open]::details-content {
   block-size: auto;
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq details::details-content {
+    transition: none;
+  }
 }

@@ -62,7 +62,15 @@ export function ResultsView({ onEdit }: { onEdit: (step: number) => void }) {
 
   const copy = statusCopy(res)
   const focus = res.focus
-  const setFocus = (tier: TierResult) => update((s) => ({ ...s, focusTier: tier.tier.id }))
+  // Picking a goal brings its card into view, so the answer follows the choice.
+  const setFocus = (tier: TierResult) => {
+    update((s) => ({ ...s, focusTier: tier.tier.id }))
+    requestAnimationFrame(() => {
+      const goal = document.getElementById('goal')
+      goal?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
+      goal?.focus({ preventScroll: true })
+    })
+  }
   const setPlanned = (id: string, value: string) =>
     update((s) => ({ ...s, semesters: s.semesters.map((x) => (x.id === id ? { ...x, plannedGwa: value } : x)) }))
   const showBudget =
@@ -103,12 +111,29 @@ export function ResultsView({ onEdit }: { onEdit: (step: number) => void }) {
       )}
 
       {/* The goal, and what it takes each semester */}
-      <section className="seq-item" style={seq(3)}>
+      <section id="goal" tabIndex={-1} aria-label="Your goal" className="seq-item outline-none" style={seq(3)}>
         {res.state === 'none' ? <BestOutcome res={res} /> : res.state === 'done' ? <FinalOutcome res={res} onEdit={() => onEdit(2)} /> : <GoalCard res={res} skip={skip} />}
       </section>
 
+      {/* Semester by semester */}
+      {(res.done.length > 0 || res.upcoming.length > 0) && (
+        <section aria-labelledby="plan" className="seq-item" style={seq(4)}>
+          <SectionHead id="plan" title={focus && res.upcoming.length ? `Semester by semester to ${focus.tier.short}` : 'Your semesters'} />
+          <div className="mt-6">
+            <SemesterChart res={res} seq={4} />
+          </div>
+          {focus && res.upcoming.length > 0 && <Roadmap res={res} focus={focus} onPlan={setPlanned} />}
+          {res.unitsAdjusted && (
+            <p className="mt-3 text-caption text-muted-foreground">
+              Your remaining {fmt.units(res.R)} units were spread across these semesters in proportion to their expected loads.
+            </p>
+          )}
+          {res.done.length > 0 && <SemesterList res={res} />}
+        </section>
+      )}
+
       {/* Where you stand on the honors scale */}
-      <section aria-labelledby="scale" className="seq-item" style={seq(4)}>
+      <section aria-labelledby="scale" className="seq-item" style={seq(5)}>
         <SectionHead id="scale" title="Where you stand on the honors scale" />
         <p className="mt-2 max-w-[60ch] text-body-sm text-muted-foreground">
           Latin honors depend on your final GWA: all your units, from first year to graduation.
@@ -120,31 +145,14 @@ export function ResultsView({ onEdit }: { onEdit: (step: number) => void }) {
 
       {/* Why the number is what it is */}
       {showBudget && (
-        <section aria-labelledby="budget" className="seq-item" style={seq(5)}>
+        <section aria-labelledby="budget" className="seq-item" style={seq(6)}>
           <SectionHead id="budget" title={`Where ${fmt.target(focus!.plan.required!)} comes from`} />
           <p className="mt-2 max-w-[60ch] text-body-sm text-muted-foreground">
             Each grade adds grade points (grade × units). Lower is better, so {focus!.tier.short} sets a ceiling on your total.
           </p>
           <div className="mt-6">
-            <PointsBudget tierName={focus!.tier.name} cutoff={focus!.tier.maxGwa} T={res.T} P={res.P} U={res.U} R={res.R} seq={5} />
+            <PointsBudget tierName={focus!.tier.name} cutoff={focus!.tier.maxGwa} T={res.T} P={res.P} U={res.U} R={res.R} seq={6} />
           </div>
-        </section>
-      )}
-
-      {/* Semester by semester */}
-      {(res.done.length > 0 || res.upcoming.length > 0) && (
-        <section aria-labelledby="plan" className="seq-item" style={seq(6)}>
-          <SectionHead id="plan" title={focus && res.upcoming.length ? `Semester by semester to ${focus.tier.short}` : 'Your semesters'} />
-          <div className="mt-6">
-            <SemesterChart res={res} seq={6} />
-          </div>
-          {focus && res.upcoming.length > 0 && <Roadmap res={res} focus={focus} onPlan={setPlanned} />}
-          {res.unitsAdjusted && (
-            <p className="mt-3 text-caption text-muted-foreground">
-              Your remaining {fmt.units(res.R)} units were spread across these semesters in proportion to their expected loads.
-            </p>
-          )}
-          {res.done.length > 0 && <SemesterList res={res} />}
         </section>
       )}
 
@@ -260,7 +268,7 @@ function GoalCard({ res, skip }: { res: Results; skip: boolean }) {
             </p>
           ) : (
             <>
-              <div className="mt-1 flex flex-wrap items-baseline gap-x-3">
+              <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <span className="font-serif text-[4.5rem] leading-none tracking-[-0.03em] text-up-maroon tabular sm:text-[5.5rem]">
                   {fmt.target(shown)}
                 </span>

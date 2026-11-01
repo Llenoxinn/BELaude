@@ -303,7 +303,7 @@ function Faq() {
       </Reveal>
       <div className="faq mt-8 border-t border-border">
         {items.map((item) => (
-          <details key={item.q} name="faq" className="group border-b border-border">
+          <details key={item.q} className="group border-b border-border">
             <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-4 text-lead font-medium transition-colors duration-150 hover:text-up-maroon [&::-webkit-details-marker]:hidden">
               {item.q}
               <span aria-hidden className="relative size-3.5 shrink-0">

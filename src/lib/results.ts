@@ -67,6 +67,8 @@ export interface Results {
   /** Regular semesters below a regular load: an underload in any semester can cost Latin honors. */
   underload: { done: DoneSemester[]; upcoming: UpcomingSemester[] }
   pendingInc: number
+  /** Units already taken but not in the GWA yet: INCs and thesis S units waiting for a final grade. */
+  pendingUnits: number
   unresolvedThesisUnits: number
 }
 
@@ -215,6 +217,7 @@ export function computeResults(app: AppState, r: Rules = defaultRules): Results 
       upcoming: upcoming.filter((u) => u.semester.term !== 3 && u.units > 0 && u.units < r.regularLoadUnits),
     },
     pendingInc,
+    pendingUnits: done.reduce((a, d) => a + d.totals.pendingIncUnits, 0) + cum.unresolvedThesisUnits,
     unresolvedThesisUnits: cum.unresolvedThesisUnits,
   }
 }
@@ -230,7 +233,9 @@ export type { TierId }
  * the program's total. They must add up before the roadmap can be trusted.
  */
 export function unitsTally(app: AppState): { done: number; planned: number; sum: number; total: number | null; matches: boolean } {
-  const done = computeResults(app).U
+  // Taken but not graded yet (INC, thesis S) still belongs to a finished semester, not to the ones ahead.
+  const res = computeResults(app)
+  const done = res.U + res.pendingUnits
   const planned = app.semesters.filter((s) => s.status === 'upcoming').reduce((a, s) => a + (parseNumber(s.plannedUnits) ?? 0), 0)
   const total = totalUnits(app)
   const sum = Math.round((done + planned) * 100) / 100

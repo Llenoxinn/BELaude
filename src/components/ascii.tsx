@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { DISK_CENTRE, GROWTH, LAUREL_LEFT, LAUREL_RIGHT, SUNFLOWER, type ArtFrame } from './art'
 import { CAMPUS, CAMPUS_SIZE } from './campus'
 import { useInView, useMotion } from '@/lib/motion'
@@ -86,6 +86,36 @@ export function stageName(progress: number): string {
   return ['a seedling', 'growing', 'opening', 'in bloom'][Math.min(3, Math.floor(Math.max(0, progress) * 4))]
 }
 
+type Box = { top: number; bottom: number; left: number; right: number }
+
+/**
+ * The rows and columns that hold dots in any of these frames. Growth frames share the full-bloom
+ * canvas, so an early stage would otherwise sit off-centre under a block of empty rows.
+ */
+function inkBox(frames: ArtFrame[]): Box {
+  const box = { top: Infinity, bottom: -1, left: Infinity, right: -1 }
+  for (const f of frames) {
+    f.lines.forEach((line, r) => {
+      Array.from(line).forEach((ch, c) => {
+        if (ch === '⠀' || ch === ' ') return
+        box.top = Math.min(box.top, r)
+        box.bottom = Math.max(box.bottom, r)
+        box.left = Math.min(box.left, c)
+        box.right = Math.max(box.right, c)
+      })
+    })
+  }
+  return box.bottom < 0 ? { top: 0, bottom: -1, left: 0, right: -1 } : box
+}
+
+function crop(frame: ArtFrame, b: Box): ArtFrame {
+  const rows = frame.lines.slice(b.top, b.bottom + 1)
+  return {
+    lines: rows.map((line) => Array.from(line).slice(b.left, b.right + 1).join('').padEnd(b.right - b.left + 1, '⠀')),
+    tone: frame.tone.slice(b.top, b.bottom + 1).map((t) => Array.from(t).slice(b.left, b.right + 1).join('')),
+  }
+}
+
 /**
  * The progress sunflower: grows frame by frame from a seedling to the stage matching units done,
  * then rests. Regrows only when the stage changes.
@@ -125,10 +155,12 @@ export function GrowthSunflower({
     return () => window.clearTimeout(timer)
   }, [target, reduced, skip, delay])
 
+  const box = useMemo(() => inkBox(GROWTH.slice(0, target + 1)), [target])
+
   return (
     <div role="img" aria-label={label} className={cn('inline-block', className)}>
       <div className={cn(stillGrowing && 'ambient still-growing')}>
-        <BrailleArt frame={GROWTH[frame]} className="text-[6px] md:text-[7px]" />
+        <BrailleArt frame={crop(GROWTH[frame], box)} className="text-[6px] md:text-[7px]" />
       </div>
     </div>
   )
