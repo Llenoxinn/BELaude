@@ -1,5 +1,7 @@
 import { ArrowSquareOut, GithubLogo } from '@phosphor-icons/react'
+import { useState } from 'react'
 import { CampusScene } from '@/components/ascii'
+import { NashDialog } from '@/components/NashDialog'
 import { ReportButton } from '@/components/ReportDialog'
 import { SablayLine } from '@/components/SablayLine'
 import { Button } from '@/components/ui/button'
@@ -20,6 +22,7 @@ function OutLink({ href, children }: { href: string; children: string }) {
 
 export function SiteFooter() {
   const { reduced, preference, setPreference } = useMotion()
+  const [asking, setAsking] = useState(false)
   return (
     <footer className="mt-24 bg-surface-alt sm:mt-32">
       <SablayLine />
@@ -34,12 +37,30 @@ export function SiteFooter() {
             Have a project, an idea or a role in mind? My other work is on GitHub, and so is a way to reach me.
           </p>
           <Button variant="mono" size="sm" className="mt-5" asChild>
-            <a href={GITHUB_PROFILE_URL} target="_blank" rel="noreferrer">
+            <a
+              href={GITHUB_PROFILE_URL}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => {
+                // Ctrl/Cmd/Shift-clicks and middle clicks go straight through
+                if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+                e.preventDefault()
+                setAsking(true)
+              }}
+            >
               <GithubLogo aria-hidden className="size-4" />
               Llenoxinn on GitHub
               <span className="sr-only">(opens in a new tab)</span>
             </a>
           </Button>
+          <NashDialog
+            open={asking}
+            onNo={() => setAsking(false)}
+            onYes={() => {
+              setAsking(false)
+              window.open(GITHUB_PROFILE_URL, '_blank', 'noreferrer')
+            }}
+          />
         </div>
 
         <nav aria-label="Footer" className="grid grid-cols-2 gap-8">

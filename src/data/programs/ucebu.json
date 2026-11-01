@@ -578,7 +578,7 @@
     },
     {
       "id": "bachelor-physical-education",
-      "name": "Bachelor of Physical Education",
+      "name": "B Physical Education",
       "college": "College of Social Sciences",
       "curriculum": "2025 Curriculum (approved by the Board of Regents 2025 Jun 26), effective 1st sem AY 2025-26",
       "totalUnits": 147,
@@ -756,7 +756,7 @@
     },
     {
       "id": "bachelor-sports-science",
-      "name": "Bachelor of Sports Science",
+      "name": "B Sports Science",
       "college": "College of Social Sciences",
       "curriculum": "2025 Curriculum (approved 2025 Jun 26), effective 1st sem AY 2025-26",
       "totalUnits": 147,
@@ -814,7 +814,7 @@
     },
     {
       "id": "aa-sports-studies",
-      "name": "Associate in Arts (Sports Studies)",
+      "name": "AA Sports Studies",
       "college": "College of Social Sciences",
       "curriculum": "2023 Curriculum (approved 2024 Jul 23), effective 1st sem AY 2024-25",
       "totalUnits": 78,
