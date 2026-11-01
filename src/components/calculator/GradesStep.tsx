@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { Plus, Trash } from '@phosphor-icons/react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Plus, Trash, WarningCircle } from '@phosphor-icons/react'
 import { Field, StepNav, useFocusFirstInvalid } from './Field'
 import { GLOSSARY, Term } from '@/components/Term'
 import { Badge } from '@/components/ui/badge'
@@ -24,9 +24,29 @@ export function GradesStep({ onBack, onNext }: { onBack: () => void; onNext: () 
   const issues = tried ? gradesIssues(state) : {}
   const issueCount = Object.keys(issues).length
   const semesters = sortSemesters(state.semesters)
+  const done = semesters.filter((s) => s.status === 'done')
+  const upcoming = semesters.filter((s) => s.status !== 'done')
 
   const patch = (id: string, p: Partial<Semester>) =>
     update((s) => ({ ...s, semesters: s.semesters.map((x) => (x.id === id ? { ...x, ...p } : x)) }))
+
+  // Marking a semester moves it to the other group, which remounts it; put focus back on its toggle.
+  const [moved, setMoved] = useState<string | null>(null)
+  useEffect(() => {
+    if (!moved) return
+    document.querySelector<HTMLElement>(`#sem-${moved} [aria-pressed="true"]`)?.focus()
+    setMoved(null)
+  }, [moved])
+
+  const setDone = (sem: Semester, value: boolean) => {
+    if ((sem.status === 'done') === value) return
+    patch(sem.id, {
+      status: value ? 'done' : 'upcoming',
+      units: sem.units || sem.plannedUnits,
+      mode: value && sem.courses.length && !sem.gwa ? 'courses' : sem.mode,
+    })
+    setMoved(sem.id)
+  }
 
   const remove = (sem: Semester) => {
     const hasData = sem.gwa || sem.courses.some((c) => c.grade)
@@ -62,18 +82,52 @@ export function GradesStep({ onBack, onNext }: { onBack: () => void; onNext: () 
         </CardDescription>
       </CardHeader>
 
-      <div className="border-t border-border">
-        {semesters.map((sem) => (
-          <SemesterBlock
-            key={sem.id}
-            semester={sem}
-            issues={issues[sem.id]}
-            nudgeKey={tried}
-            onChange={(p) => patch(sem.id, p)}
-            onRemove={() => remove(sem)}
-          />
-        ))}
-      </div>
+      <section aria-labelledby="done-title">
+        <GroupTitle id="done-title" count={done.length}>
+          Finished
+        </GroupTitle>
+        {done.length ? (
+          done.map((sem) => (
+            <SemesterBlock
+              key={sem.id}
+              semester={sem}
+              issues={issues[sem.id]}
+              nudgeKey={tried}
+              onChange={(p) => patch(sem.id, p)}
+              onDone={(v) => setDone(sem, v)}
+              onRemove={() => remove(sem)}
+            />
+          ))
+        ) : (
+          <p className="border-b border-border py-6 text-body-sm text-muted-foreground">
+            No finished semesters yet. Mark a semester Done once its grades are out.
+          </p>
+        )}
+      </section>
+
+      {upcoming.length > 0 && (
+        <section aria-labelledby="upcoming-title" className="mt-10">
+          <GroupTitle id="upcoming-title" count={upcoming.length}>
+            Still to take
+          </GroupTitle>
+          <p id={PLANNED_HINT} className="mt-3 max-w-[60ch] text-caption text-muted-foreground">
+            Enter the units each semester will count in your GWA. Keep at least a regular load: an underload can cost
+            Latin honors.
+          </p>
+          <ul className="mt-2">
+            {upcoming.map((sem) => (
+              <UpcomingRow
+                key={sem.id}
+                semester={sem}
+                error={issues[sem.id]?.units}
+                onChange={(p) => patch(sem.id, p)}
+                onDone={(v) => setDone(sem, v)}
+                onRemove={() => remove(sem)}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button variant="outline" size="sm" onClick={() => add(false)}>
@@ -97,121 +151,172 @@ export function GradesStep({ onBack, onNext }: { onBack: () => void; onNext: () 
   )
 }
 
+const PLANNED_HINT = 'planned-hint'
+
+function GroupTitle({ id, count, children }: { id: string; count: number; children: ReactNode }) {
+  return (
+    <h2 id={id} className="flex items-baseline gap-2 border-b border-border pb-3 text-lg">
+      {children}
+      <span className="tabular text-body-sm text-muted-foreground">
+        {count} {count === 1 ? 'semester' : 'semesters'}
+      </span>
+    </h2>
+  )
+}
+
+/** Done / Not yet toggle and the remove button, shared by both groups. */
+function SemesterControls({ label, isDone, onDone, onRemove }: { label: string; isDone: boolean; onDone: (v: boolean) => void; onRemove: () => void }) {
+  return (
+    <div className="flex items-center gap-1">
+      <div role="group" aria-label={`Is ${label} done?`} className="inline-flex rounded-[7px] border border-input p-0.5">
+        {[
+          { v: true, t: 'Done' },
+          { v: false, t: 'Not yet' },
+        ].map(({ v, t }) => (
+          <button
+            key={t}
+            type="button"
+            aria-pressed={isDone === v}
+            onClick={() => onDone(v)}
+            className={cn(
+              'min-h-9 rounded-[4px] px-3 text-caption transition-colors duration-150',
+              isDone === v ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+      <Button variant="ghost" size="icon" aria-label={`Remove ${label}`} onClick={onRemove}>
+        <Trash aria-hidden className="size-4" />
+      </Button>
+    </div>
+  )
+}
+
+/** A semester still to take: one row with its expected units. The shared hint sits above the list. */
+function UpcomingRow({
+  semester: s,
+  error,
+  onChange,
+  onDone,
+  onRemove,
+}: {
+  semester: Semester
+  error?: string
+  onChange: (p: Partial<Semester>) => void
+  onDone: (v: boolean) => void
+  onRemove: () => void
+}) {
+  const label = semesterLabel(s)
+  const id = `planned-${s.id}`
+  return (
+    <li id={`sem-${s.id}`} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 border-b border-border py-4 sm:grid-cols-[1fr_9rem_auto]">
+      <div>
+        <h3 className="text-lg leading-tight">{label}</h3>
+        {s.yearLabel && <p className="text-caption text-muted-foreground">{s.yearLabel}</p>}
+      </div>
+      <div className="col-span-2 row-start-2 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+        <label htmlFor={id} className="sr-only">
+          Expected units for {label}
+        </label>
+        <div className="relative">
+          <Input
+            id={id}
+            inputMode="decimal"
+            autoComplete="off"
+            placeholder="18"
+            className="pr-14 tabular"
+            value={s.plannedUnits}
+            aria-invalid={!!error}
+            aria-describedby={error ? `${id}-error` : PLANNED_HINT}
+            onChange={(e) => onChange({ plannedUnits: e.target.value })}
+          />
+          <span aria-hidden className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-caption text-muted-foreground">
+            units
+          </span>
+        </div>
+        {error && (
+          <p id={`${id}-error`} className="mt-1.5 flex items-start gap-1.5 text-caption text-up-maroon">
+            <WarningCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
+            {error}
+          </p>
+        )}
+      </div>
+      <div className="col-start-2 row-start-1 sm:col-start-3">
+        <SemesterControls label={label} isDone={false} onDone={onDone} onRemove={onRemove} />
+      </div>
+    </li>
+  )
+}
+
 function SemesterBlock({
   semester: s,
   issues,
   nudgeKey,
   onChange,
+  onDone,
   onRemove,
 }: {
   semester: Semester
   issues?: SemesterIssues
   nudgeKey: number
   onChange: (p: Partial<Semester>) => void
+  onDone: (v: boolean) => void
   onRemove: () => void
 }) {
   const label = semesterLabel(s)
-  const isDone = s.status === 'done'
-  const ids = { gwa: `gwa-${s.id}`, units: `units-${s.id}`, planned: `planned-${s.id}` }
-
-  const setDone = (done: boolean) =>
-    onChange({
-      status: done ? 'done' : 'upcoming',
-      units: s.units || s.plannedUnits,
-      mode: done && s.courses.length && !s.gwa ? 'courses' : s.mode,
-    })
+  const ids = { gwa: `gwa-${s.id}`, units: `units-${s.id}` }
 
   return (
-    <section id={`sem-${s.id}`} aria-label={label} className="border-b border-border py-6">
+    <section id={`sem-${s.id}`} aria-labelledby={`sem-${s.id}-title`} className="border-b border-border py-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-xl">{label}</h3>
+          <h3 id={`sem-${s.id}-title`} className="text-xl">
+            {label}
+          </h3>
           {s.yearLabel && <p className="text-caption text-muted-foreground">{s.yearLabel}</p>}
         </div>
-        <div className="flex items-center gap-2">
-          <div role="group" aria-label={`Is ${label} done?`} className="inline-flex rounded-[7px] border border-input p-0.5">
-            {[
-              { v: true, t: 'Done' },
-              { v: false, t: 'Not yet' },
-            ].map(({ v, t }) => (
-              <button
-                key={t}
-                type="button"
-                aria-pressed={isDone === v}
-                onClick={() => setDone(v)}
-                className={cn(
-                  'min-h-9 rounded-[4px] px-3 text-caption transition-colors duration-150',
-                  isDone === v ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-          <Button variant="ghost" size="icon" aria-label={`Remove ${label}`} onClick={onRemove}>
-            <Trash aria-hidden className="size-4" />
-          </Button>
-        </div>
+        <SemesterControls label={label} isDone onDone={onDone} onRemove={onRemove} />
       </div>
 
-      {isDone ? (
-        <Tabs value={s.mode} onValueChange={(v) => onChange({ mode: v as Semester['mode'] })} className="mt-5">
-          <TabsList>
-            <TabsTrigger value="gwa">I know my GWA</TabsTrigger>
-            <TabsTrigger value="courses">Enter each course</TabsTrigger>
-          </TabsList>
-          <TabsContent value="gwa">
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field id={ids.gwa} label="Semester GWA" error={issues?.gwa} nudgeKey={nudgeKey}>
-                <Input
-                  id={ids.gwa}
-                  inputMode="decimal"
-                  placeholder="e.g. 1.50"
-                  className="tabular"
-                  value={s.gwa}
-                  aria-invalid={!!issues?.gwa}
-                  onChange={(e) => onChange({ gwa: e.target.value })}
-                />
-              </Field>
-              <Field id={ids.units} label="Units counted in GWA" hint="Leave out NSTP and PE." error={issues?.units} nudgeKey={nudgeKey}>
-                <Input
-                  id={ids.units}
-                  inputMode="decimal"
-                  placeholder="e.g. 18"
-                  className="tabular"
-                  value={s.units}
-                  aria-invalid={!!issues?.units}
-                  onChange={(e) => onChange({ units: e.target.value })}
-                />
-              </Field>
-            </div>
-            <SemesterSummary semester={s} />
-          </TabsContent>
-          <TabsContent value="courses">
-            <CourseTable semester={s} issues={issues} onChange={onChange} />
-            <SemesterSummary semester={s} showWorking />
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <div className="mt-4 max-w-56">
-          <Field
-            id={ids.planned}
-            label="Expected units"
-            hint="Units that will count in your GWA. Keep at least a regular load: an underload can cost Latin honors."
-            error={issues?.units}
-            nudgeKey={nudgeKey}
-          >
-            <Input
-              id={ids.planned}
-              inputMode="decimal"
-              placeholder="e.g. 18"
-              className="tabular"
-              value={s.plannedUnits}
-              onChange={(e) => onChange({ plannedUnits: e.target.value })}
-            />
-          </Field>
-        </div>
-      )}
+      <Tabs value={s.mode} onValueChange={(v) => onChange({ mode: v as Semester['mode'] })} className="mt-5">
+        <TabsList>
+          <TabsTrigger value="gwa">I know my GWA</TabsTrigger>
+          <TabsTrigger value="courses">Enter each course</TabsTrigger>
+        </TabsList>
+        <TabsContent value="gwa">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field id={ids.gwa} label="Semester GWA" error={issues?.gwa} nudgeKey={nudgeKey}>
+              <Input
+                id={ids.gwa}
+                inputMode="decimal"
+                placeholder="e.g. 1.50"
+                className="tabular"
+                value={s.gwa}
+                aria-invalid={!!issues?.gwa}
+                onChange={(e) => onChange({ gwa: e.target.value })}
+              />
+            </Field>
+            <Field id={ids.units} label="Units counted in GWA" hint="Leave out NSTP and PE." error={issues?.units} nudgeKey={nudgeKey}>
+              <Input
+                id={ids.units}
+                inputMode="decimal"
+                placeholder="e.g. 18"
+                className="tabular"
+                value={s.units}
+                aria-invalid={!!issues?.units}
+                onChange={(e) => onChange({ units: e.target.value })}
+              />
+            </Field>
+          </div>
+          <SemesterSummary semester={s} />
+        </TabsContent>
+        <TabsContent value="courses">
+          <CourseTable semester={s} issues={issues} onChange={onChange} />
+          <SemesterSummary semester={s} showWorking />
+        </TabsContent>
+      </Tabs>
     </section>
   )
 }

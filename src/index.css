@@ -370,14 +370,10 @@ html[data-hidden='true'] .ambient,
   animation-play-state: paused;
 }
 
-/* Lines drawn bottom to top (tower) */
-.build pre > span {
-  animation: fade-in 300ms var(--ease-out) both;
-  animation-delay: calc(var(--line) * 60ms);
-  animation-play-state: paused;
-}
-.build[data-inview='true'] pre > span {
-  animation-play-state: running;
+/* Footer campus scene: 120 Braille cells, each 0.7em wide, fill the container exactly.
+   On phones it stops shrinking at 4.5px so the dots stay visible, and the sides crop evenly. */
+.campus-scene {
+  font-size: max(4.5px, calc(100cqi / 120 / 0.7));
 }
 
 /* Results sequence: chunks 100ms apart, played once, skipped by any click or key */

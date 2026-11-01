@@ -85,13 +85,28 @@ export function ResultsView({ onEdit }: { onEdit: (step: number) => void }) {
         <Notices res={res} />
       </section>
 
+      {/* Goal picker: first, so the plan below follows the student's choice */}
+      {res.state !== 'done' && (
+        <section aria-labelledby="tiers" className="seq-item" style={seq(2)}>
+          <SectionHead id="tiers" title="Pick your goal" />
+          <p className="mt-2 max-w-[60ch] text-body-sm text-muted-foreground">
+            Each Latin honor and what it takes from here. Choose one and the plan below follows it.
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {res.tiers.map((t) => (
+              <TierCard key={t.tier.id} tier={t} focused={focus === t} onSelect={() => setFocus(t)} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* The goal, and what it takes each semester */}
-      <section className="seq-item" style={seq(2)}>
+      <section className="seq-item" style={seq(3)}>
         {res.state === 'none' ? <BestOutcome res={res} /> : res.state === 'done' ? <FinalOutcome res={res} /> : <GoalCard res={res} skip={skip} />}
       </section>
 
       {/* Where you stand on the honors scale */}
-      <section aria-labelledby="scale" className="seq-item" style={seq(3)}>
+      <section aria-labelledby="scale" className="seq-item" style={seq(4)}>
         <SectionHead id="scale" title="Where you stand on the honors scale" />
         <p className="mt-2 max-w-[60ch] text-body-sm text-muted-foreground">
           Latin honors depend on your final GWA: all your units, from first year to graduation.
@@ -100,19 +115,6 @@ export function ResultsView({ onEdit }: { onEdit: (step: number) => void }) {
           <GwaScale markers={scaleMarkers(res)} focus={focus?.tier.id} />
         </div>
       </section>
-
-      {/* Goal picker */}
-      {res.state !== 'done' && (
-        <section aria-labelledby="tiers" className="seq-item" style={seq(4)}>
-          <SectionHead id="tiers" title="Pick your goal" />
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {res.tiers.map((t) => (
-              <TierCard key={t.tier.id} tier={t} focused={focus === t} onSelect={() => setFocus(t)} />
-            ))}
-          </div>
-          <p className="mt-3 text-caption text-muted-foreground">Each Latin honor and what it takes from here. Tap one to update your plan.</p>
-        </section>
-      )}
 
       {/* Why the number is what it is */}
       {showBudget && (
@@ -404,7 +406,15 @@ function TierCard({ tier, focused, onSelect }: { tier: TierResult; focused: bool
           <span className={cn('block tabular', selectable && 'text-up-maroon')}>{need}</span>
         </span>
       </span>
-      <span className="mt-3 block meta-label">{status.word}</span>
+      <span className="mt-3 flex items-center justify-between gap-2">
+        <span className="meta-label">{status.word}</span>
+        {focused && (
+          <span className="inline-flex items-center gap-1 whitespace-nowrap text-caption font-medium text-up-maroon">
+            <CheckCircle aria-hidden weight="fill" className="size-4" />
+            Your goal
+          </span>
+        )}
+      </span>
     </button>
   )
 }

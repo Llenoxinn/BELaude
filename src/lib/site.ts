@@ -1,6 +1,7 @@
 import { rules } from './rules'
 
-export const REPO_URL = 'https://github.com/Llenoxinn/BELaude'
+export const GITHUB_PROFILE_URL = 'https://github.com/Llenoxinn'
+export const REPO_URL = `${GITHUB_PROFILE_URL}/BELaude`
 export const FEEDBACK_URL = `${REPO_URL}/issues/new`
 export const PROSPECTUS_ERROR_URL = `${REPO_URL}/issues/new?title=${encodeURIComponent('Prospectus data error: ')}`
 

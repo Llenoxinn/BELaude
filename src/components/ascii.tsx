@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { DISK_CENTRE, GROWTH, LAUREL_LEFT, LAUREL_RIGHT, SUNFLOWER, TOWER, type ArtFrame } from './art'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { DISK_CENTRE, GROWTH, LAUREL_LEFT, LAUREL_RIGHT, SUNFLOWER, type ArtFrame } from './art'
+import { CAMPUS, CAMPUS_SIZE } from './campus'
 import { useInView, useMotion } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
@@ -120,12 +121,111 @@ export function GrowthSunflower({
   )
 }
 
-/** Footer scene in Braille dots (bell tower between two sunflowers), built line by line from the ground up. */
-export function Tower({ className }: { className?: string }) {
-  const [ref, inView] = useInView<HTMLDivElement>()
+// ---------- footer campus scene ----------
+
+const { cols: COLS, rows: ROWS } = CAMPUS_SIZE
+const BLANK = new Uint8Array(COLS * ROWS)
+const FRAMES = CAMPUS.map((f) => Uint8Array.from(f.lines.join(''), (ch) => ch.charCodeAt(0) - 0x2800))
+// Position of each of the 8 dots inside a Braille cell, by bit.
+const DOT = [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [0, 3], [1, 3]]
+const DEVELOP_MS = 2200
+const SWAP_MS = 1800
+const HOLD_MS = 6000
+
+/**
+ * The moment each dot flips during a transition, 0..1: mostly the sweep position, plus grain so
+ * the front edge dissolves instead of wiping. Seeded so it looks the same on every visit.
+ */
+function dotOrder(sweep: (x: number, y: number) => number): Float32Array {
+  let seed = 0x9e3779b9
+  const rand = () => {
+    seed = (seed + 0x6d2b79f5) | 0
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+  const order = new Float32Array(COLS * ROWS * 8)
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      DOT.forEach(([dx, dy], b) => {
+        order[(r * COLS + c) * 8 + b] = 0.7 * sweep((c * 2 + dx) / (COLS * 2 - 1), (r * 4 + dy) / (ROWS * 4 - 1)) + 0.3 * rand()
+      })
+  return order
+}
+const RISE = dotOrder((_, y) => 1 - y) // first view: develops from the ground up
+const WIPE = dotOrder((x) => x) // later swaps: left to right
+
+function mix(from: Uint8Array, to: Uint8Array, order: Float32Array, t: number): string {
+  const lines: string[] = []
+  const codes = new Array<number>(COLS)
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const i = r * COLS + c
+      let code = 0
+      for (let b = 0; b < 8; b++) code |= (order[i * 8 + b] < t ? to[i] : from[i]) & (1 << b)
+      codes[c] = 0x2800 + code
+    }
+    lines.push(String.fromCharCode(...codes))
+  }
+  return lines.join('\n')
+}
+
+const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2)
+
+/**
+ * Footer scene: the two campus photos in Braille dots. Develops from the ground up on first view,
+ * then trades one photo for the other dot by dot. Writes text straight to the <pre> each frame
+ * (no React renders). Pauses off screen and in hidden tabs; holds still under reduced motion.
+ */
+export function CampusScene({ className }: { className?: string }) {
+  const { reduced } = useMotion()
+  const [ref, inView] = useInView<HTMLDivElement>(false, '0px')
+  const pre = useRef<HTMLPreElement>(null)
+  const state = useRef({ frame: 0, phase: 'develop' as 'develop' | 'hold' | 'swap', elapsed: 0 })
+
+  useLayoutEffect(() => {
+    if (pre.current) pre.current.textContent = mix(BLANK, FRAMES[0], RISE, reduced ? 1 : 0)
+    // Only the first paint: later states are drawn by the effect below.
+  }, [])
+
+  useEffect(() => {
+    const el = pre.current
+    const s = state.current
+    if (!el) return
+    if (reduced) {
+      if (s.phase !== 'hold') Object.assign(s, { phase: 'hold', elapsed: 0 })
+      el.textContent = mix(FRAMES[s.frame], FRAMES[s.frame], WIPE, 1)
+      return
+    }
+    if (!inView) return
+
+    let raf = 0
+    let last = 0
+    const tick = (now: number) => {
+      // Clamp the step so a backgrounded tab resumes where it left off instead of jumping.
+      s.elapsed += last ? Math.min(now - last, 50) : 0
+      last = now
+      if (s.phase === 'hold') {
+        if (s.elapsed < HOLD_MS) {
+          raf = requestAnimationFrame(tick)
+          return
+        }
+        Object.assign(s, { phase: 'swap', elapsed: 0 })
+      }
+      const developing = s.phase === 'develop'
+      const k = Math.min(1, s.elapsed / (developing ? DEVELOP_MS : SWAP_MS))
+      const next = developing ? 0 : (s.frame + 1) % FRAMES.length
+      el.textContent = developing ? mix(BLANK, FRAMES[0], RISE, easeInOut(k)) : mix(FRAMES[s.frame], FRAMES[next], WIPE, easeInOut(k))
+      if (k >= 1) Object.assign(s, { frame: next, phase: 'hold', elapsed: 0 })
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [inView, reduced])
+
   return (
-    <div ref={ref} data-inview={inView} className={cn('build', className)}>
-      <BrailleArt frame={TOWER} className="text-[7px] sm:text-[8px]" lineStyle={(r) => ({ '--line': TOWER.lines.length - 1 - r }) as CSSProperties} />
+    <div ref={ref} role="img" aria-label="UP Cebu drawn in Braille dots: the Oblation, then the Administration Building" className={cn('@container flex justify-center overflow-hidden', className)}>
+      <pre ref={pre} aria-hidden className="braille campus-scene" />
     </div>
   )
 }
