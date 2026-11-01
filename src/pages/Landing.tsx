@@ -1,8 +1,8 @@
-import { useEffect, type CSSProperties } from 'react'
-import { Compass, HandHeart, LockSimple } from '@phosphor-icons/react'
+import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import { HeroSunflower } from '@/components/ascii'
 import { Term, GLOSSARY } from '@/components/Term'
 import { Button } from '@/components/ui/button'
+import { mixHint } from '@/lib/copy'
 import { Wordmark } from '@/components/Wordmark'
 import { Ambient, Reveal, useInView } from '@/lib/motion'
 import { href } from '@/lib/router'
@@ -26,6 +26,26 @@ const EXAMPLE = [
   { sem: '1st sem, AY 2026–27', target: 1.41 },
   { sem: '2nd sem, AY 2026–27', target: 1.41 },
   { sem: '1st sem, AY 2027–28', target: 1.41 },
+]
+
+const WHY: { title: string; body: ReactNode }[] = [
+  {
+    title: 'Built for UP',
+    body: (
+      <>
+        UP’s cutoffs, grading scale and exclusions come preloaded. <Term tip={GLOSSARY.NSTP}>NSTP</Term>,{' '}
+        <Term tip={GLOSSARY.PE}>PE</Term>, <Term tip={GLOSSARY.INC}>INC</Term> and thesis grades are handled for you.
+      </>
+    ),
+  },
+  {
+    title: 'Honest, and kind about it',
+    body: 'Exact numbers, never padded. If a goal is out of reach, it tells you gently and shows what is still possible.',
+  },
+  {
+    title: 'Private by design',
+    body: 'No account, no upload, no server. Your grades never leave this device.',
+  },
 ]
 
 export function Landing() {
@@ -68,47 +88,40 @@ export function Landing() {
       <section aria-labelledby="why" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 md:py-32">
         <Reveal>
           <h2 id="why" className="max-w-[24ch] text-[2.25rem]">
-            Other calculators look back. This one looks forward.
+            <span className="block">Other calculators look back.</span> <span className="block">This one looks forward.</span>
           </h2>
         </Reveal>
-        <div className="mt-12 grid grid-flow-dense gap-4 md:grid-cols-[1.4fr_1fr] md:grid-rows-2">
-          <Reveal index={0} className="rounded-lg border border-border p-6 sm:p-8 md:row-span-2">
-            <Compass aria-hidden className="size-6 text-up-maroon" />
-            <h3 className="mt-4 text-2xl">A roadmap, not a verdict</h3>
-            <p className="mt-2 max-w-[48ch] text-muted-foreground">
-              A target GWA for every semester you have left, in plain grades, that updates as soon as you add a new semester.
+        <div className="mt-12 grid gap-10 md:grid-cols-[1.4fr_1fr] md:gap-12">
+          <Reveal index={0} className="rounded-xl border border-border p-6 sm:p-8">
+            <h3 className="text-2xl">A roadmap, not a verdict</h3>
+            <p className="mt-2 max-w-[46ch] text-muted-foreground">
+              See the semester GWA you need for every term you have left, and what it takes in actual grades. Add a semester
+              and the numbers update.
             </p>
             <div aria-label="Example roadmap, not real data" role="group" className="mt-8 border-t border-border">
-              <p className="meta-label pt-4">Example: semester GWA needed for Magna</p>
+              <p className="meta-label pt-4">Example: what Magna takes from here</p>
               <ul className="mt-2">
                 {EXAMPLE.map((row) => (
-                  <li key={row.sem} className="grid grid-cols-[1fr_auto] items-center gap-x-4 border-b border-border py-3 text-sm">
+                  <li key={row.sem} className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 border-b border-border py-3 text-sm">
                     <span className="text-muted-foreground">{row.sem}</span>
-                    <span className="tabular text-up-maroon">{row.target.toFixed(2)} or better</span>
+                    <span className="tabular">
+                      <span className="text-up-maroon">{row.target.toFixed(2)}</span>
+                      <span className="text-muted-foreground"> or better</span>
+                    </span>
                   </li>
                 ))}
               </ul>
+              <p className="mt-3 text-caption text-muted-foreground">{mixHint(EXAMPLE[0].target)}</p>
             </div>
           </Reveal>
-          <Reveal index={1} className="rounded-lg border border-border p-6 sm:p-8">
-            <h3 className="text-2xl">Built for UP</h3>
-            <p className="mt-2 text-muted-foreground">
-              UP’s honors cutoffs, grading scale and exclusions are built in: <Term tip={GLOSSARY.NSTP}>NSTP</Term>,{' '}
-              <Term tip={GLOSSARY.PE}>PE</Term>, <Term tip={GLOSSARY.INC}>INC</Term> and thesis grades are handled for you.
-            </p>
-          </Reveal>
-          <Reveal index={2} className="grid gap-6 rounded-lg border border-border p-6 sm:grid-cols-2 sm:p-8">
-            <div>
-              <HandHeart aria-hidden className="size-6 text-up-green" />
-              <h3 className="mt-3 text-xl">Kind and honest</h3>
-              <p className="mt-1 text-body-sm text-muted-foreground">Exact math, and a gentle word when a goal is out of reach. Never fake hope.</p>
-            </div>
-            <div>
-              <LockSimple aria-hidden className="size-6 text-foreground" />
-              <h3 className="mt-3 text-xl">Private by design</h3>
-              <p className="mt-1 text-body-sm text-muted-foreground">No account, no upload, no server. Everything stays on your device.</p>
-            </div>
-          </Reveal>
+          <ul className="grid border-t border-border md:grid-rows-3">
+            {WHY.map((item, i) => (
+              <Reveal as="li" key={item.title} index={i + 1} className="flex flex-col justify-center border-b border-border py-6">
+                <h3 className="text-xl">{item.title}</h3>
+                <p className="mt-1.5 max-w-[42ch] text-body-sm text-muted-foreground">{item.body}</p>
+              </Reveal>
+            ))}
+          </ul>
         </div>
       </section>
 
