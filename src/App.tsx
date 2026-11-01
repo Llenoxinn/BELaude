@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import { SiteFooter } from '@/components/SiteFooter'
+import { Intro } from '@/components/Intro'
 import { SiteHeader } from '@/components/SiteHeader'
 import { MotionProvider } from '@/lib/motion'
 import { useRoute } from '@/lib/router'
@@ -46,6 +47,7 @@ export default function App() {
         {route === '/' && <Landing />}
         <Suspense fallback={<div className="min-h-[60vh]" />}>{route === '/calculator' && <Calculator />}</Suspense>
         <SiteFooter />
+        <Intro />
       </StoreProvider>
     </MotionProvider>
   )
