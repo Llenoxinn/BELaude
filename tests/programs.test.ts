@@ -30,6 +30,7 @@ describe('UP Cebu programs', () => {
   it('matches the printed study plan totals', () => {
     const totals = Object.fromEntries(upc.programs.map((p) => [p.id, p.totalUnits]))
     expect(totals).toEqual({
+      'bs-accountancy': 184,
       'bs-biology': 143,
       'ba-communication': 144,
       'bs-computer-science': 155,
@@ -51,5 +52,7 @@ describe('UP Cebu programs', () => {
     expect(programGwaUnits(polsci)).toBe(138)
     const cs = upc.programs.find((p) => p.id === 'bs-computer-science')!
     expect(programGwaUnits(cs)).toBe(155)
+    const bsa = upc.programs.find((p) => p.id === 'bs-accountancy')!
+    expect(programGwaUnits(bsa)).toBe(178)
   })
 })

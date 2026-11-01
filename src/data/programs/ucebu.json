@@ -3,6 +3,81 @@
   "campusId": "upc",
   "programs": [
     {
+      "id": "bs-accountancy",
+      "name": "BS Accountancy",
+      "college": "School of Management",
+      "curriculum": "2025 Curriculum (approved by the Board of Regents 2025 Jun 26), effective 1st sem AY 2025-26",
+      "totalUnits": 184,
+      "note": "A five-year program: four years, a 4th-year midyear term, then one semester of 5th year.",
+      "source": "https://our.upcebu.edu.ph/wp-content/uploads/2025/07/BSA-Study-Plan-rev-2025-color.pdf",
+      "retrievedOn": "2026-11-01",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 19
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 21
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 21
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 21
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 21
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 21,
+          "courses": [
+            {
+              "code": "BA 199.1",
+              "units": 3
+            }
+          ]
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 21,
+          "courses": [
+            {
+              "code": "BA 199.2",
+              "units": 3
+            }
+          ]
+        },
+        {
+          "label": "4th year, Midyear",
+          "kind": "midyear",
+          "units": 3
+        },
+        {
+          "label": "5th year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        }
+      ]
+    },
+    {
       "id": "bs-biology",
       "name": "BS Biology",
       "college": "College of Science",
