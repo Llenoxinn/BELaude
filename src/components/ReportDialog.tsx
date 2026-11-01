@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { WarningCircle } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { REPORT_KEY } from '@/lib/site'
 
-type Phase = 'idle' | 'sending' | 'sent' | 'failed'
+type Phase = 'idle' | 'sending' | 'sent' | 'failed' | 'unset'
 
 export interface ReportSpec {
   title: string
@@ -18,8 +18,6 @@ export interface ReportSpec {
   notePlaceholder: string
   /** A report that is only the note (feedback, a study plan error) can't be sent empty. */
   noteRequired?: boolean
-  /** Pre-filled GitHub issue, offered when sending fails. */
-  fallbackUrl: string
 }
 
 /** Sends a report to the developer through Web3Forms, showing exactly what goes before it goes. */
@@ -28,6 +26,9 @@ export function ReportDialog({ open, onClose, spec }: { open: boolean; onClose: 
   const [email, setEmail] = useState('')
   const [phase, setPhase] = useState<Phase>('idle')
   const [noteError, setNoteError] = useState(false)
+  // Several report buttons can be on one page, each with its own dialog: ids must not collide.
+  const uid = useId()
+  const ids = { note: `${uid}-note`, noteError: `${uid}-note-error`, email: `${uid}-email` }
 
   const close = () => {
     onClose()
@@ -40,10 +41,14 @@ export function ReportDialog({ open, onClose, spec }: { open: boolean; onClose: 
   const send = async () => {
     if (spec.noteRequired && !note.trim()) {
       setNoteError(true)
-      document.getElementById('report-note')?.focus()
+      document.getElementById(ids.note)?.focus()
       return
     }
     setNoteError(false)
+    if (!REPORT_KEY) {
+      setPhase('unset')
+      return
+    }
     setPhase('sending')
     try {
       const res = await fetch('https://api.web3forms.com/submit', {
@@ -105,45 +110,43 @@ export function ReportDialog({ open, onClose, spec }: { open: boolean; onClose: 
             </>
           )}
 
-          <Label htmlFor="report-note" className="block">
+          <Label htmlFor={ids.note} className="block">
             {spec.noteLabel} {!spec.noteRequired && <span className="font-normal text-muted-foreground">(optional)</span>}
           </Label>
           <textarea
-            id="report-note"
+            id={ids.note}
             name="note"
             rows={3}
             maxLength={1000}
             value={note}
             aria-invalid={noteError || undefined}
-            aria-describedby={noteError ? 'report-note-error' : undefined}
+            aria-describedby={noteError ? ids.noteError : undefined}
             onChange={(e) => setNote(e.target.value)}
             placeholder={spec.notePlaceholder}
             className="mt-1.5 w-full rounded-[6px] border border-input bg-background px-3 py-2 text-base placeholder:text-faint focus-visible:border-up-maroon focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-up-maroon aria-invalid:border-up-maroon sm:text-body-sm"
           />
           {noteError && (
-            <p id="report-note-error" className="mt-1.5 flex items-start gap-1.5 text-caption text-up-maroon">
+            <p id={ids.noteError} className="mt-1.5 flex items-start gap-1.5 text-caption text-up-maroon">
               <WarningCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
               Write a few words about what’s wrong.
             </p>
           )}
 
-          <Label htmlFor="report-email" className="mt-4 block">
+          <Label htmlFor={ids.email} className="mt-4 block">
             Email for a reply <span className="font-normal text-muted-foreground">(optional)</span>
           </Label>
-          <Input id="report-email" name="email" type="email" autoComplete="email" className="mt-1.5" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input id={ids.email} name="email" type="email" autoComplete="email" className="mt-1.5" value={email} onChange={(e) => setEmail(e.target.value)} />
 
           {/* Rendered empty first so a failure is announced when it appears */}
           <div role="status" className="mt-3 text-caption">
-            {phase === 'failed' && (
+            {(phase === 'failed' || phase === 'unset') && (
               <p className="flex items-start gap-1.5 text-up-maroon">
                 <WarningCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
-                <span>
-                  The report didn’t go through. Check your connection and try again, or{' '}
-                  <a className="underline" href={spec.fallbackUrl} target="_blank" rel="noreferrer">
-                    report it on GitHub
-                  </a>
-                  .
-                </span>
+                {phase === 'failed'
+                  ? 'The report didn’t go through. Check your connection and try again.'
+                  : import.meta.env.DEV
+                    ? 'Reports can’t be sent yet: add VITE_WEB3FORMS_KEY to .env.local and restart the dev server.'
+                    : 'Reports can’t be sent right now. Please try again later.'}
               </p>
             )}
           </div>
@@ -162,20 +165,9 @@ export function ReportDialog({ open, onClose, spec }: { open: boolean; onClose: 
   )
 }
 
-/**
- * A button that opens the report popup, or, when no Web3Forms key is set, a link to the
- * pre-filled GitHub issue instead.
- */
+/** A button that opens the report popup. Reports always stay on the site, never on GitHub. */
 export function ReportButton({ spec, children, className }: { spec: ReportSpec; children: ReactNode; className?: string }) {
   const [open, setOpen] = useState(false)
-  if (!REPORT_KEY) {
-    return (
-      <a href={spec.fallbackUrl} target="_blank" rel="noreferrer" className={className}>
-        {children}
-        <span className="sr-only"> (opens GitHub in a new tab)</span>
-      </a>
-    )
-  }
   return (
     <>
       <button type="button" className={className} onClick={() => setOpen(true)}>

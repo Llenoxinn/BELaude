@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
-import { CheckCircle, DownloadSimple, Info, PencilSimple, WarningCircle, X } from '@phosphor-icons/react'
+import { CheckCircle, Flag, DownloadSimple, Info, PencilSimple, WarningCircle, X } from '@phosphor-icons/react'
 import { SemesterChart } from './SemesterChart'
 import { ExampleSemester, GwaScale, MiniScale, PointsBudget, type ScaleMarker } from './Visuals'
 import { GrowthSunflower, Laurel, stageName, useRolling } from '@/components/ascii'
@@ -11,7 +11,7 @@ import { useMotion } from '@/lib/motion'
 import { computeResults, type Results, type TierResult } from '@/lib/results'
 import { rules } from '@/lib/rules'
 import { canShare, renderShareCard } from '@/lib/shareCard'
-import { calcReportUrl, rulesVerifiedLine } from '@/lib/site'
+import { rulesVerifiedLine } from '@/lib/site'
 import { ReportButton } from '@/components/ReportDialog'
 import { activeProgram, parseNumber } from '@/lib/state'
 import { useStore } from '@/lib/store'
@@ -416,7 +416,7 @@ function RecordCheck({ ours, semesters, onEdit }: { ours: number; semesters: num
               <PencilSimple aria-hidden /> Review my grades
             </Button>
             <ReportButton
-              className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
               spec={{
                 title: 'Report a calculation problem',
                 subject: `BELaude: GWA mismatch (${report.program})`,
@@ -428,13 +428,15 @@ function RecordCheck({ ours, semesters, onEdit }: { ours: number; semesters: num
                 ],
                 noteLabel: 'Anything else?',
                 notePlaceholder: 'For example: I shifted programs in my 2nd year.',
-                fallbackUrl: calcReportUrl(report),
               }}
             >
-              Everything’s right? Report it
+              <Flag aria-hidden /> Report a calculation error
             </ReportButton>
           </div>
-          <p className="mt-2 text-caption text-muted-foreground">The report shares both GWAs and your program, never your grades.</p>
+          <p className="mt-2 text-caption text-muted-foreground">
+            All of these check out and they still differ? Report it so BELaude can be fixed. Only both GWAs and your program are
+            sent, never your grades.
+          </p>
         </div>
       )}
     </div>

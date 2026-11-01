@@ -3,7 +3,7 @@ import { CampusScene } from '@/components/ascii'
 import { ReportButton } from '@/components/ReportDialog'
 import { Button } from '@/components/ui/button'
 import { useMotion } from '@/lib/motion'
-import { FEEDBACK_URL, GITHUB_PROFILE_URL, REPO_URL, rulesVerifiedLine } from '@/lib/site'
+import { GITHUB_PROFILE_URL, REPO_URL, rulesVerifiedLine } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
 function OutLink({ href, children }: { href: string; children: string }) {
@@ -56,7 +56,6 @@ export function SiteFooter() {
                 noteLabel: 'Your feedback',
                 notePlaceholder: 'A bug, an idea, a program to add…',
                 noteRequired: true,
-                fallbackUrl: FEEDBACK_URL,
               }}
             >
               <span className="link-draw">Send feedback</span>

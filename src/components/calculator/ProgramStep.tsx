@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { ArrowSquareOut, CheckCircle, Info, PencilSimple } from '@phosphor-icons/react'
+import { ArrowSquareOut, CheckCircle, Flag, Info, PencilSimple } from '@phosphor-icons/react'
 import { Field, StepNav, useFocusFirstInvalid } from './Field'
 import { ReportButton } from '@/components/ReportDialog'
 import { GLOSSARY, Term } from '@/components/Term'
@@ -8,7 +8,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { campuses, notCounted, programGwaUnits } from '@/lib/programs'
-import { PROSPECTUS_ERROR_URL, formatDate, yearRanges } from '@/lib/site'
+import { formatDate, yearRanges } from '@/lib/site'
 import type { Program } from '@/lib/programs'
 import { activeProgram, OTHER_CAMPUS } from '@/lib/state'
 import { useStore } from '@/lib/store'
@@ -215,7 +215,7 @@ function ProgramSummary({ program, onEdit }: { program: Program; onEdit: () => v
         <p className="text-caption text-muted-foreground">Different curriculum for your batch?</p>
         <div className="flex flex-wrap items-center gap-x-4">
           <ReportButton
-            className="inline-flex min-h-11 items-center text-caption text-muted-foreground hover:text-foreground"
+            className="inline-flex min-h-11 items-center gap-1.5 text-caption text-muted-foreground hover:text-foreground"
             spec={{
               title: 'Report a study plan error',
               subject: `BELaude: study plan error (${program.name})`,
@@ -227,9 +227,9 @@ function ProgramSummary({ program, onEdit }: { program: Program; onEdit: () => v
               noteLabel: 'What’s wrong?',
               notePlaceholder: 'For example: 4th year, 2nd sem should be 15 units, not 12.',
               noteRequired: true,
-              fallbackUrl: PROSPECTUS_ERROR_URL + encodeURIComponent(program.name),
             }}
           >
+            <Flag aria-hidden className="size-3.5" />
             <span className="link-draw">Report an error</span>
             <span className="sr-only"> in this study plan</span>
           </ReportButton>
