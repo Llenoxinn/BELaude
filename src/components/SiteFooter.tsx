@@ -4,7 +4,7 @@ import { ReportButton } from '@/components/ReportDialog'
 import { Button } from '@/components/ui/button'
 import { useMotion } from '@/lib/motion'
 import { href } from '@/lib/router'
-import { GITHUB_PROFILE_URL, REPO_URL, rulesVerifiedLine } from '@/lib/site'
+import { GITHUB_PROFILE_URL, REPO_URL } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
 function OutLink({ href, children }: { href: string; children: string }) {
@@ -94,7 +94,6 @@ export function SiteFooter() {
               <span className="text-foreground">Unofficial.</span> Made by a UP student, not by UP. Your grades stay on your
               device, and the University Registrar decides final honors.
             </p>
-            <p className="mt-1">{rulesVerifiedLine()}</p>
           </div>
           <button
             type="button"
