@@ -12,7 +12,6 @@ const C = {
   hairline: '#EAEAEA',
 }
 const FONTS = {
-  serif: '"Newsreader Variable", Georgia, serif',
   sans: '"Geist Variable", "Helvetica Neue", sans-serif',
   pixel: '"Departure Mono", ui-monospace, monospace', // logo only
 }
@@ -29,7 +28,7 @@ export async function renderShareCard(res: Results): Promise<Blob | null> {
   const focus = res.focus
   if (!focus || !canShare(res)) return null
   await Promise.all(
-    ['500 60px', '500 140px'].map((s) => document.fonts.load(`${s} ${FONTS.serif}`)).concat([
+    ['600 60px', '600 140px'].map((s) => document.fonts.load(`${s} ${FONTS.sans}`)).concat([
       document.fonts.load(`30px ${FONTS.sans}`),
       document.fonts.load(`600 24px ${FONTS.sans}`),
       document.fonts.load(`20px ${FONTS.pixel}`),
@@ -86,7 +85,7 @@ export async function renderShareCard(res: Results): Promise<Blob | null> {
 
   // The goal
   const title = `My path to ${focus.tier.short}`
-  fit(title, '500', 60, FONTS.serif, LW)
+  fit(title, '600', 60, FONTS.sans, LW)
   ctx.fillStyle = C.black
   ctx.fillText(title, L, 246)
 
@@ -95,7 +94,7 @@ export async function renderShareCard(res: Results): Promise<Blob | null> {
   ctx.fillText(locked ? 'Secured by the numbers' : 'Semester GWA to aim for', L, 296)
 
   const big = locked ? 'Secured' : fmt.target(required)
-  fit(big, '500', 140, FONTS.serif, LW - 170)
+  fit(big, '600', 140, FONTS.sans, LW - 170)
   ctx.fillStyle = C.maroon
   ctx.fillText(big, L - 4, 430)
   if (!locked) {

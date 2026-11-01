@@ -1,10 +1,23 @@
 import type { CSSProperties } from 'react'
 import { fmt } from '@/lib/copy'
-import { exampleGrades } from '@/lib/gwa'
+import { exampleGrades, tierForGwa } from '@/lib/gwa'
 import { rules, type TierId } from '@/lib/rules'
 import { cn } from '@/lib/utils'
 
 // Honors zones on a GWA scale. Lower is better, so the scale runs from 1.00 (left) upward.
+const ZONE_INK: Record<TierId | 'none', string> = {
+  summa: 'text-gold-ink',
+  magna: 'text-green-ink',
+  cum: 'text-maroon-ink',
+  none: 'text-muted-foreground',
+}
+
+const TAG: Record<TierId, string> = {
+  summa: 'bg-gold-tint text-gold-ink',
+  magna: 'bg-green-tint text-green-ink',
+  cum: 'bg-maroon-tint text-maroon-ink',
+}
+
 const ZONE_BG: Record<TierId | 'none', string> = {
   summa: 'var(--zone-summa)',
   magna: 'var(--zone-magna)',
@@ -34,93 +47,133 @@ export interface ScaleMarker {
   tone: 'black' | 'green' | 'maroon' | 'gray'
 }
 
-const MARKER_COLOR: Record<ScaleMarker['tone'], string> = {
-  black: 'var(--up-black)',
-  green: 'var(--up-green)',
-  maroon: 'var(--up-maroon)',
-  gray: 'var(--text-faint)',
+const MARKER_SHAPE: Record<ScaleMarker['tone'], string> = {
+  black: 'bg-up-black',
+  green: 'bg-up-black',
+  maroon: 'bg-up-maroon',
+  gray: 'border-2 border-up-black bg-background',
 }
 
 /**
- * Where you stand: the honors zones as a ruler, with your GWA now and possible final GWAs pinned
- * below it in separate lanes so labels never collide.
+ * Figure 2, a forest plot of final GWA: one row per estimate (so equal values never hide each
+ * other), the achievable range as an interval, the honors ranges as bands behind every row and
+ * the cutoffs as lines. Lower is better, so 1.00 is on the left.
  */
-export function GwaScale({ markers, focus }: { markers: ScaleMarker[]; focus?: TierId }) {
-  const max = scaleMax(markers.map((m) => m.value))
+export function GwaScale({ markers, range, focus }: { markers: ScaleMarker[]; range?: { best: number; worst: number }; focus?: TierId }) {
+  const all = [...markers.map((m) => m.value), ...(range ? [range.best, range.worst] : [])]
+  const max = scaleMax(all)
   const pct = (v: number) => ((Math.min(max, Math.max(1, v)) - 1) / (max - 1)) * 100
-  const ticks = [1, ...rules.latinHonors.map((t) => t.maxGwa), ...[2, 2.5, 3, 4, 5].filter((t) => t <= max)]
-  const laneHeight = 44
+  const ticks: number[] = []
+  for (let t = 1; t <= max + 1e-9; t += 0.25) ticks.push(Math.round(t * 100) / 100)
+  const goal = rules.latinHonors.find((t) => t.id === focus)
+
+  const Bands = () => (
+    <>
+      {zones(max).map((z) => {
+        const width = pct(z.to) - pct(z.from)
+        return width > 0 ? (
+          <span key={z.id} aria-hidden className="absolute inset-y-0" style={{ left: `${pct(z.from)}%`, width: `${width}%`, background: z.id === 'none' ? 'transparent' : ZONE_BG[z.id] }} />
+        ) : null
+      })}
+      {rules.latinHonors.map((t) => (
+        <span
+          key={t.id}
+          aria-hidden
+          className={cn('absolute inset-y-0 w-0 border-l', t.id === goal?.id ? 'border-up-maroon' : 'border-dashed border-[var(--hairline-strong)]')}
+          style={{ left: `${pct(t.maxGwa)}%` }}
+        />
+      ))}
+    </>
+  )
+  const row = 'grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_6.5rem] items-center gap-x-4 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_9rem]'
 
   return (
     <figure className="w-full">
-      <div className="mb-1.5 flex justify-between meta-label">
-        <span>← Better</span>
-        <span>Worse →</span>
-      </div>
-      <div className="relative h-5">
-        {ticks.map((t) => (
-          <span
-            key={t}
-            className="absolute top-0 -translate-x-1/2 tabular text-label text-muted-foreground first:translate-x-0"
-            style={{ left: `${pct(t)}%` }}
-          >
-            {t.toFixed(2)}
-          </span>
-        ))}
-      </div>
-      <div className="relative flex h-11 overflow-hidden rounded-md">
-        {zones(max).map((z) => {
-          const width = pct(z.to) - pct(z.from)
-          if (width <= 0) return null
-          return (
-            <div
-              key={z.id}
-              className={cn('flex items-center justify-center border-r border-white px-1 text-center', focus === z.id && 'ring-2 ring-up-maroon ring-inset')}
-              style={{ width: `${width}%`, background: ZONE_BG[z.id] }}
-            >
+      <figcaption className="mb-4">
+        <span className="block text-caption font-semibold">Figure 2</span>
+        <span className="block text-body-sm text-muted-foreground">Your final GWA at graduation: where you are, where you are headed, and what is still possible</span>
+      </figcaption>
+
+      {/* Region names over the plot */}
+      <div className={row}>
+        <span />
+        <div className="relative h-6">
+          {zones(max).map((z) => {
+            const width = pct(z.to) - pct(z.from)
+            if (width < 4) return null
+            return (
               <span
-                className={cn(
-                  'truncate text-label font-semibold',
-                  z.id === 'none' ? 'text-muted-foreground' : 'text-up-green',
-                  focus === z.id && 'text-up-maroon',
-                  width < 13 && 'sr-only',
-                )}
+                key={z.id}
+                className={cn('absolute -translate-x-1/2 whitespace-nowrap text-label font-medium', ZONE_INK[z.id])}
+                style={{ left: `${pct((z.from + z.to) / 2)}%` }}
               >
-                {z.label}
+                {z.id === 'none' ? 'No honors' : z.label}
               </span>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
+        <span className="text-right text-label text-muted-foreground">Final GWA</span>
       </div>
-      <div className="relative" style={{ height: markers.length * laneHeight + 10 }}>
-        {markers.map((m, i) => {
-          const x = pct(m.value)
-          const right = x > 55
+
+      <ul>
+        {range && (
+          <li className={row}>
+            <span className="py-3 text-body-sm">Possible final GWA</span>
+            <div className="relative h-12">
+              <Bands />
+              <span aria-hidden className="absolute top-1/2 h-0.5 -translate-y-1/2 bg-up-black" style={{ left: `${pct(range.best)}%`, width: `${pct(range.worst) - pct(range.best)}%` }} />
+              <span aria-hidden className="absolute top-1/2 h-3 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-up-black" style={{ left: `${pct(range.best)}%` }} />
+              <span aria-hidden className="absolute top-1/2 h-3 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-up-black" style={{ left: `${pct(range.worst)}%` }} />
+            </div>
+            <span className="text-right text-body-sm tabular">
+              {fmt.gwa(range.best)}–{fmt.gwa(range.worst)}
+            </span>
+          </li>
+        )}
+        {markers.map((m) => {
+          const tier = tierForGwa(m.value)
           return (
-            <div key={m.label} className="absolute top-0" style={{ left: `${x}%` }}>
-              <span
-                aria-hidden
-                className="absolute -top-[22px] left-0 w-px -translate-x-1/2"
-                style={{ height: 22 + i * laneHeight + 14, background: MARKER_COLOR[m.tone] }}
-              />
-              <span
-                aria-hidden
-                className="absolute -top-[27px] left-0 size-2.5 -translate-x-1/2 rounded-full border-2 border-white"
-                style={{ background: MARKER_COLOR[m.tone] }}
-              />
-              <span
-                className={cn('absolute whitespace-nowrap text-caption leading-tight', right ? '-translate-x-full pr-2 text-right' : 'pl-2')}
-                style={{ top: i * laneHeight + 8 }}
-              >
-                <span className="block text-muted-foreground">{m.label}</span>
-                <span className="tabular font-medium" style={{ color: m.tone === 'gray' ? undefined : MARKER_COLOR[m.tone] }}>
-                  {fmt.gwa(m.value)}
+            <li key={m.label} className={row}>
+              <span className="py-3 text-body-sm">{m.label}</span>
+              <div className="relative h-12">
+                <Bands />
+                <span aria-hidden className={cn('absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full', MARKER_SHAPE[m.tone])} style={{ left: `${pct(m.value)}%` }} />
+              </div>
+              <span className="flex items-center justify-end gap-2 text-body-sm">
+                <span className="tabular font-medium">{fmt.gwa(m.value)}</span>
+                <span className={cn('hidden rounded-full px-2 py-0.5 text-label font-medium sm:inline', tier ? TAG[tier.id] : 'bg-neutral-tint text-muted-foreground')}>
+                  {tier ? tier.short : 'None'}
                 </span>
               </span>
-            </div>
+            </li>
           )
         })}
+      </ul>
+
+      {/* x-axis */}
+      <div className={row}>
+        <span />
+        <div className="relative h-8 border-t border-[var(--text-faint)]">
+          {ticks.map((t, i) => (
+            <span key={t} className="absolute top-0 flex flex-col items-center" style={{ left: `${pct(t)}%`, transform: 'translateX(-50%)' }}>
+              <span aria-hidden className="h-1.5 w-px bg-[var(--text-faint)]" />
+              <span className={cn('mt-1 text-label tabular text-muted-foreground', i % 2 === 1 && 'max-sm:hidden')}>{t.toFixed(2)}</span>
+            </span>
+          ))}
+        </div>
+        <span />
       </div>
+      <div className={row}>
+        <span />
+        <p className="mt-1 text-center text-caption text-muted-foreground">Final GWA (lower is better)</p>
+        <span />
+      </div>
+
+      <p className="mt-4 max-w-[72ch] text-caption text-muted-foreground">
+        <span className="font-medium text-foreground">How to read it.</span> Further left is better. The shaded areas are the
+        Latin honors ranges{goal ? `, and the maroon line is the ${goal.short} cutoff` : ''}.
+        {range ? ' The black interval runs from your best possible finish (every remaining grade 1.00) to your worst passing one (every remaining grade 3.00).' : ''}
+      </p>
     </figure>
   )
 }
@@ -168,8 +221,15 @@ export function PointsBudget({
   const left = cap - P
   const perUnit = left / R
   const usedPct = Math.min(100, (P / cap) * 100)
+  // Round ticks along the axis, then the cap itself at the end
+  const stepPts = [10, 25, 50, 100, 250].find((s) => cap / s <= 6) ?? 500
+  const axisTicks = [...Array.from({ length: Math.floor(cap / stepPts) + 1 }, (_, i) => i * stepPts).filter((t) => t < cap - stepPts * 0.4), cap]
   return (
     <figure>
+      <p className="mb-4">
+        <span className="block text-caption font-semibold">Figure 3</span>
+        <span className="block text-body-sm text-muted-foreground">The grade points {tierName} allows, used and left</span>
+      </p>
       <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div>
           <dt className="meta-label">Points allowed in total</dt>
@@ -190,18 +250,30 @@ export function PointsBudget({
         </div>
       </dl>
 
-      <div aria-hidden className="mt-5 flex h-9 w-full overflow-hidden rounded-md border border-border">
-        <div className="seq-grow flex items-center bg-up-black px-2" style={{ width: `${usedPct}%`, ...({ '--seq': seq } as CSSProperties) }}>
-          <span className="truncate text-label font-semibold text-white">Used</span>
+      {/* The bar on a grade-point axis: what is used, what is left, and the cap at its end */}
+      <div className="mt-8">
+        <div aria-hidden className="flex h-10 w-full gap-0.5">
+          <div className="seq-grow flex items-center rounded-l-md bg-up-black px-3" style={{ width: `${usedPct}%`, ...({ '--seq': seq } as CSSProperties) }}>
+            <span className="truncate text-label font-semibold text-white">Used {P.toFixed(2)}</span>
+          </div>
+          <div className="flex flex-1 items-center rounded-r-md bg-maroon-tint px-3">
+            <span className="truncate text-label font-semibold text-maroon-ink">Left {left.toFixed(2)}</span>
+          </div>
         </div>
-        <div className="flex flex-1 items-center bg-maroon-tint px-2">
-          <span className="truncate text-label font-semibold text-up-maroon">Left: {left.toFixed(2)} points</span>
+        <div aria-hidden className="relative h-8 border-t border-[var(--text-faint)]">
+          {axisTicks.map((t) => (
+            <span key={t} className="absolute top-0 flex flex-col items-center" style={{ left: `${(t / cap) * 100}%`, transform: t === 0 ? 'none' : t >= cap ? 'translateX(-100%)' : 'translateX(-50%)' }}>
+              <span className="h-1.5 w-px bg-[var(--text-faint)]" />
+              <span className="mt-1 text-label tabular text-muted-foreground">{t === cap ? `${cap.toFixed(2)} cap` : t}</span>
+            </span>
+          ))}
         </div>
+        <p aria-hidden className="text-center text-caption text-muted-foreground">Grade points (grade × units)</p>
       </div>
 
-      <figcaption className="mt-4 max-w-[60ch] text-body-sm">
+      <figcaption className="mt-5 max-w-[72ch] text-body-sm">
         <span className="tabular">
-          {left.toFixed(2)} ÷ {fmt.units(R)} units = {perUnit.toFixed(4)}
+          {left.toFixed(2)} points ÷ {fmt.units(R)} units = {perUnit.toFixed(4)}
         </span>
         . If every semester you have left averages that or better, your final GWA lands at {cutoff.toFixed(2)} or better, which is{' '}
         {tierName}.

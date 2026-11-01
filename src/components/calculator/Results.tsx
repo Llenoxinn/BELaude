@@ -11,7 +11,6 @@ import { useMotion } from '@/lib/motion'
 import { computeResults, type Results, type TierResult } from '@/lib/results'
 import { rules } from '@/lib/rules'
 import { canShare, renderShareCard } from '@/lib/shareCard'
-import { rulesVerifiedLine } from '@/lib/site'
 import { ReportButton } from '@/components/ReportDialog'
 import { activeProgram, parseNumber } from '@/lib/state'
 import { useStore } from '@/lib/store'
@@ -139,7 +138,7 @@ export function ResultsView({ onEdit }: { onEdit: (step: number) => void }) {
           Latin honors depend on your final GWA: all your units, from first year to graduation.
         </p>
         <div className="mt-8">
-          <GwaScale markers={scaleMarkers(res)} focus={focus?.tier.id} />
+          <GwaScale markers={scaleMarkers(res)} range={finalRange(res)} focus={focus?.tier.id} />
         </div>
       </section>
 
@@ -175,10 +174,6 @@ export function ResultsView({ onEdit }: { onEdit: (step: number) => void }) {
           <PencilSimple aria-hidden /> Edit grades
         </Button>
       </section>
-
-      <p className="text-caption text-faint">
-        {rulesVerifiedLine()} BELaude is unofficial: the University Registrar makes the official determination.
-      </p>
     </div>
   )
 }
@@ -195,9 +190,14 @@ function scaleMarkers(res: Results): ScaleMarker[] {
   const markers: ScaleMarker[] = []
   if (res.cumulativeGwa !== null) markers.push({ value: res.cumulativeGwa, label: res.R > 0 ? 'Your GWA now' : 'Your final GWA', tone: 'black' })
   const likely = res.scenarios.find((s) => s.id === 'likely')
-  if (likely?.final != null && res.done.length > 0) markers.push({ value: likely.final, label: 'If you keep your recent pace', tone: 'gray' })
-  if (res.R > 0 && res.bestFinal !== null) markers.push({ value: res.bestFinal, label: 'Best you can still finish with', tone: 'green' })
+  if (likely?.final != null && res.done.length > 0) markers.push({ value: likely.final, label: 'At your recent pace', tone: 'gray' })
   return markers
+}
+
+/** Best (all 1.00s) to worst passing (all 3.00s) final GWA, while there are units left. */
+function finalRange(res: Results): { best: number; worst: number } | undefined {
+  const worst = res.scenarios.find((s) => s.id === 'worst')?.final
+  return res.R > 0 && res.bestFinal !== null && worst != null ? { best: res.bestFinal, worst } : undefined
 }
 
 /** Things worth knowing that change the math or eligibility: underloads and pending INCs. */
@@ -245,7 +245,7 @@ function GoalCard({ res, skip }: { res: Results; skip: boolean }) {
     <div className="grid gap-8 rounded-xl border border-border p-6 sm:p-8 md:grid-cols-[1fr_auto]">
       <div>
         <p className="meta-label">Your goal</p>
-        <p className="mt-2 font-serif text-[1.75rem] leading-tight sm:text-[2.1rem]">
+        <p className="mt-2 font-display text-[1.75rem] leading-tight sm:text-[2.1rem]">
           Graduate <span className="text-up-maroon">{focus.tier.name}</span>
         </p>
         <p className="mt-2 text-body-sm text-muted-foreground">
@@ -256,23 +256,23 @@ function GoalCard({ res, skip }: { res: Results; skip: boolean }) {
         <div className="mt-7 border-t border-border pt-6">
           <p className="meta-label">What you need each semester</p>
           {required === null ? (
-            <p className="mt-2 font-serif text-[1.75rem] leading-tight">
+            <p className="mt-2 font-display text-[1.75rem] leading-tight">
               Your what-if plan finishes at <span className="tabular text-up-maroon">{fmt.gwa(focus.plan.finalIfPlanned!)}</span>
               {focus.plan.finalIfPlanned! <= focus.tier.maxGwa + 1e-9 ? `, inside ${focus.tier.short}.` : `, outside ${focus.tier.short}.`}
             </p>
           ) : locked ? (
-            <p className="mt-2 font-serif text-[1.75rem] leading-tight">Any passing grades keep {focus.tier.short}. Just avoid an underload.</p>
+            <p className="mt-2 font-display text-[1.75rem] leading-tight">Any passing grades keep {focus.tier.short}. Just avoid an underload.</p>
           ) : impossible ? (
-            <p className="mt-2 font-serif text-[1.75rem] leading-tight">
+            <p className="mt-2 font-display text-[1.75rem] leading-tight">
               With your what-if plan, {focus.tier.short} is out of reach. Change the semesters you planned below.
             </p>
           ) : (
             <>
               <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span className="font-serif text-[4.5rem] leading-none tracking-[-0.03em] text-up-maroon tabular sm:text-[5.5rem]">
+                <span className="font-display text-[4.5rem] leading-none tracking-[-0.03em] text-up-maroon tabular sm:text-[5.5rem]">
                   {fmt.target(shown)}
                 </span>
-                <span className="font-serif text-2xl">or better</span>
+                <span className="font-display text-2xl">or better</span>
               </div>
               <p className="mt-3 text-body-sm">
                 as your <strong className="font-medium">semester GWA</strong> in{' '}
@@ -319,13 +319,13 @@ function BestOutcome({ res }: { res: Results }) {
         <dl className="grid gap-6 sm:grid-cols-2">
           <div>
             <dt className="meta-label">Best final GWA you can still get</dt>
-            <dd className="mt-1 font-serif text-5xl text-up-maroon tabular">{res.bestFinal !== null ? fmt.gwa(res.bestFinal) : 'n/a'}</dd>
+            <dd className="mt-1 font-display text-5xl text-up-maroon tabular">{res.bestFinal !== null ? fmt.gwa(res.bestFinal) : 'n/a'}</dd>
             <dd className="mt-1 text-caption text-muted-foreground">If every remaining grade is 1.00.</dd>
           </div>
           {likely?.final != null && (
             <div>
               <dt className="meta-label">Realistic final GWA</dt>
-              <dd className="mt-1 font-serif text-5xl tabular">{fmt.gwa(likely.final)}</dd>
+              <dd className="mt-1 font-display text-5xl tabular">{fmt.gwa(likely.final)}</dd>
               <dd className="mt-1 text-caption text-muted-foreground">{likely.assumption}.</dd>
             </div>
           )}
@@ -350,10 +350,10 @@ function FinalOutcome({ res, onEdit }: { res: Results; onEdit: () => void }) {
   return (
     <div className="rounded-xl border border-border p-6 sm:p-8">
       <p className="meta-label">Your final GWA</p>
-      <p className="mt-2 font-serif text-[4.5rem] leading-none text-up-maroon tabular">
+      <p className="mt-2 font-display text-[4.5rem] leading-none text-up-maroon tabular">
         {res.cumulativeGwa !== null ? fmt.gwa(res.cumulativeGwa) : 'n/a'}
       </p>
-      {res.main && <p className="mt-3 font-serif text-2xl">{res.main.tier.name} range</p>}
+      {res.main && <p className="mt-3 font-display text-2xl">{res.main.tier.name} range</p>}
       {res.cumulativeGwa !== null && <RecordCheck ours={res.cumulativeGwa} semesters={res.done.length} onEdit={onEdit} />}
     </div>
   )
@@ -461,11 +461,11 @@ const STATUS: Record<TierResult['status'], { word: string; tone: Tone }> = {
   missed: { word: 'Not reached', tone: 'neutral' },
 }
 
-const BLOCK: Record<Tone, string> = {
-  maroon: 'bg-maroon-tint text-up-maroon',
-  green: 'bg-green-tint text-up-green',
-  gold: 'bg-gold-tint text-gold-ink',
-  neutral: 'bg-neutral-tint text-muted-foreground',
+// Each honor keeps one pastel everywhere: summa gold, magna green, cum laude red
+const TIER_TAG: Record<string, string> = {
+  summa: 'bg-gold-tint text-gold-ink',
+  magna: 'bg-green-tint text-green-ink',
+  cum: 'bg-maroon-tint text-maroon-ink',
 }
 
 /** Goal card (design.md 2b): tier name in mono caps on a tint block, both GWAs spelled out underneath. */
@@ -487,13 +487,13 @@ function TierCard({ tier, focused, onSelect }: { tier: TierResult; focused: bool
       aria-pressed={focused}
       onClick={onSelect}
       className={cn(
-        'rounded-lg border bg-background p-4 text-left transition-colors duration-150 disabled:cursor-default',
-        focused ? 'border-up-maroon' : 'border-border enabled:hover:border-border-strong',
+        'rounded-xl border bg-background p-5 text-left transition-[border-color,box-shadow] duration-200 disabled:cursor-default disabled:opacity-70',
+        focused ? 'border-up-black shadow-[0_0_0_1px_var(--up-black)]' : 'border-border enabled:hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
       )}
     >
       <span className="flex items-center justify-between gap-2">
         <Laurel active={focused}>
-          <span className={cn('inline-block rounded-[4px] px-2 py-0.5 text-body-sm font-semibold', BLOCK[focused ? 'maroon' : status.tone])}>
+          <span className={cn('inline-block rounded-full px-2.5 py-0.5 text-body-sm font-semibold', TIER_TAG[tier.tier.id])}>
             {tier.tier.short}
           </span>
         </Laurel>
@@ -512,7 +512,7 @@ function TierCard({ tier, focused, onSelect }: { tier: TierResult; focused: bool
       <span className="mt-3 flex items-center justify-between gap-2">
         <span className="meta-label">{status.word}</span>
         {focused && (
-          <span className="inline-flex items-center gap-1 whitespace-nowrap text-caption font-medium text-up-maroon">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap text-caption font-medium text-foreground">
             <CheckCircle aria-hidden weight="fill" className="size-4" />
             Your goal
           </span>
@@ -595,7 +595,7 @@ function TargetCell({ target, planned }: { target: number; planned: boolean }) {
   if (planned) {
     return (
       <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
-        <span className="font-serif text-[1.75rem] leading-none tabular">{fmt.grade(target)}</span>
+        <span className="font-display text-[1.75rem] leading-none tabular">{fmt.grade(target)}</span>
         <span className="text-caption text-muted-foreground">your plan</span>
       </span>
     )
@@ -605,7 +605,7 @@ function TargetCell({ target, planned }: { target: number; planned: boolean }) {
   if (target > 5) return <span className="text-body-sm font-medium text-up-maroon">Any grade</span>
   return (
     <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
-      <span className="font-serif text-[1.75rem] leading-none text-up-maroon tabular">{fmt.target(target)}</span>
+      <span className="font-display text-[1.75rem] leading-none text-up-maroon tabular">{fmt.target(target)}</span>
       <span className="text-caption text-muted-foreground">or better</span>
     </span>
   )

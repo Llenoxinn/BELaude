@@ -1,8 +1,11 @@
-import { useEffect, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react'
 import { HeroSunflower } from '@/components/ascii'
+import { SablayLine } from '@/components/SablayLine'
 import { Term, GLOSSARY } from '@/components/Term'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { mixHint } from '@/lib/copy'
+import { exampleGrades } from '@/lib/gwa'
 import { Wordmark } from '@/components/Wordmark'
 import { Ambient, Reveal, useInView } from '@/lib/motion'
 import { href } from '@/lib/router'
@@ -16,18 +19,17 @@ const STEPS = [
 ]
 
 const RANGES = [
-  { tier: 'Summa cum laude', range: '1.0000 to 1.2000' },
+  { tier: 'Summa cum laude', range: '1.0000 to 1.2000'},
   { tier: 'Magna cum laude', range: '1.2001 to 1.4500' },
-  { tier: 'Cum laude', range: '1.4501 to 1.7500' },
+  { tier: 'Cum laude', range: '1.4501 to 1.7500'},
 ]
 
-// A made-up example for the feature block, not a real student’s grades.
+// A made-up example for the hero preview and the bento, not a real student’s grades.
 const EXAMPLE = [
-  { sem: '1st sem, AY 2026–27', target: 1.41 },
-  { sem: '2nd sem, AY 2026–27', target: 1.41 },
-  { sem: '1st sem, AY 2027–28', target: 1.41 },
+  { sem: '1st sem, AY 2026–27', units: 21, target: 1.41 },
+  { sem: '2nd sem, AY 2026–27', units: 20, target: 1.41 },
+  { sem: '1st sem, AY 2027–28', units: 21, target: 1.41 },
 ]
-
 const WHY: { title: string; body: ReactNode }[] = [
   {
     title: 'Built for UP',
@@ -39,8 +41,8 @@ const WHY: { title: string; body: ReactNode }[] = [
     ),
   },
   {
-    title: 'Honest, and kind about it',
-    body: 'Exact numbers, never padded. If a goal is out of reach, it tells you gently and shows what is still possible.',
+    title: 'Honest numbers',
+    body: 'Exact, never rounded in your favor. If a goal is out of reach, it says so and shows what is still possible.',
   },
   {
     title: 'Private by design',
@@ -57,16 +59,13 @@ export function Landing() {
 
   return (
     <main id="main" tabIndex={-1}>
-      {/* Hero */}
-      <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-14 pb-16 sm:px-6 sm:pt-24 md:grid-cols-[1.25fr_1fr] md:pb-28">
+      {/* Hero: the promise on the left, what it looks like on the right */}
+      <section className="hero-glow relative mx-auto grid max-w-6xl items-center gap-12 px-4 pt-14 pb-20 sm:px-6 sm:pt-24 md:grid-cols-[1.1fr_1fr] md:pb-32">
         <div>
-          <Wordmark />
-          <h1 className="mt-10 max-w-[18ch] text-[2.25rem] sm:text-[3.5rem]">
-            Don’t just compute your GWA. Plan it.
-          </h1>
-          <p className="mt-5 max-w-[52ch] text-lead text-muted-foreground">
-            Tell BELaude your grades so far. It shows the GWA you need each semester to graduate with Latin honors, and tells
-            you kindly if you can’t.
+          <Badge tone="maroon">For UP students, and unofficial</Badge>
+          <h1 className="mt-6 max-w-[16ch] text-[2.5rem] leading-[1.05] tracking-[-0.04em] sm:text-[4rem]">Don’t just compute your GWA. Plan it.</h1>
+          <p className="mt-6 max-w-[48ch] text-lead text-muted-foreground">
+            Tell BELaude your grades so far. It shows the GWA you need each semester to graduate with Latin honors.
           </p>
           <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
             <Button size="lg" asChild>
@@ -75,51 +74,28 @@ export function Landing() {
             <p className="text-sm text-muted-foreground">No sign-up. Your grades stay on your device.</p>
           </div>
         </div>
-        <div className="flex justify-center">
-          <Ambient>
-            <HeroSunflower />
-          </Ambient>
-        </div>
+        <Reveal index={1}>
+          <RoadmapPreview />
+        </Reveal>
       </section>
 
-      {/* Why BELaude: one asymmetric bento */}
-      <section aria-labelledby="why" className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 md:pb-24">
+      {/* Why BELaude: one gapless bento */}
+      <section aria-labelledby="why" className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 md:pb-32">
         <Reveal>
-          <h2 id="why" className="max-w-[24ch] text-[2.25rem]">
+          <h2 id="why" className="max-w-[24ch] text-[2.25rem] leading-[1.1]">
             <span className="block">Other calculators look back.</span> <span className="block">This one looks forward.</span>
           </h2>
         </Reveal>
-        <div className="mt-12 grid gap-10 md:grid-cols-[1.4fr_1fr] md:gap-12">
-          <Reveal index={0} className="rounded-xl border border-border p-6 sm:p-8">
-            <h3 className="text-2xl">A roadmap, not a verdict</h3>
-            <p className="mt-2 max-w-[46ch] text-muted-foreground">
-              See the semester GWA you need for every term you have left, and what it takes in actual grades. Add a semester
-              and the numbers update.
-            </p>
-            <div aria-label="Example roadmap, not real data" role="group" className="mt-8 border-t border-border">
-              <p className="meta-label pt-4">Example: what Magna takes from here</p>
-              <ul className="mt-2">
-                {EXAMPLE.map((row) => (
-                  <li key={row.sem} className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 border-b border-border py-3 text-sm">
-                    <span className="text-muted-foreground">{row.sem}</span>
-                    <span className="tabular">
-                      <span className="text-up-maroon">{row.target.toFixed(2)}</span>
-                      <span className="text-muted-foreground"> or better</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-caption text-muted-foreground">{mixHint(EXAMPLE[0].target)}</p>
-            </div>
-          </Reveal>
-          <ul className="grid border-t border-border md:grid-rows-3">
-            {WHY.map((item, i) => (
-              <Reveal as="li" key={item.title} index={i + 1} className="flex flex-col justify-center border-b border-border py-6">
-                <h3 className="text-xl">{item.title}</h3>
-                <p className="mt-1.5 max-w-[42ch] text-body-sm text-muted-foreground">{item.body}</p>
-              </Reveal>
-            ))}
-          </ul>
+        <Reveal className="mt-12">
+          <TargetDemo />
+        </Reveal>
+        <div className="mt-16 grid gap-10 md:grid-cols-3 md:gap-12">
+          {WHY.map((item, i) => (
+            <Reveal key={item.title} index={i} className="border-t border-border pt-6">
+              <h3 className="text-lg">{item.title}</h3>
+              <p className="mt-2 max-w-[40ch] text-body-sm text-muted-foreground">{item.body}</p>
+            </Reveal>
+          ))}
         </div>
       </section>
 
@@ -149,7 +125,9 @@ export function Landing() {
           <tbody>
             {RANGES.map((r, i) => (
               <Reveal as="tr" index={i} key={r.tier} className="border-b border-border">
-                <td className="py-4 font-serif text-xl">{r.tier}</td>
+                <td className="py-4 text-xl font-semibold tracking-[-0.02em]">
+                  {r.tier}
+                </td>
                 <td className="py-4 text-right tabular">{r.range}</td>
               </Reveal>
             ))}
@@ -160,28 +138,43 @@ export function Landing() {
       <Faq />
 
       {/* The developer's note: honors are a number, not the measure of an education */}
-      <Section id="note" title="A note from the developer" divider>
-        <div className="max-w-[62ch] space-y-4 text-muted-foreground">
-          <p>
-            BELaude is a small side project. It does the arithmetic behind Latin honors, but it doesn’t claim that a GWA
-            measures your education, or that honors are the point of being in UP.
-          </p>
-          <p>
-            Learn because you want to understand, not just for the number. Don’t trade your health, your sleep or the people
-            you care about for a cutoff. No laude is worth that.
-          </p>
+      <section aria-labelledby="note-title" className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="grid items-center gap-12 border-t border-border py-20 md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] md:gap-16 md:py-28">
+          <Reveal>
+            <h2 id="note-title" className="text-[2.25rem] leading-[1.1]">
+              A note from the developer
+            </h2>
+            <div className="mt-6 max-w-[58ch] space-y-4 text-lead text-muted-foreground">
+              <p>
+                BELaude is a small side project. It does the arithmetic behind Latin honors, but it doesn’t claim that a GWA
+                measures your education, or that honors are the point of being in UP.
+              </p>
+              <p>
+                Learn because you want to understand, not just for the number. Don’t trade your health, your sleep or the people
+                you care about for a cutoff. No laude is worth that.
+              </p>
+            </div>
+            <p className="mt-10 max-w-[30ch] text-[1.75rem] leading-[1.25] font-semibold tracking-[-0.03em] text-balance sm:text-[2rem]">
+              And if you do graduate with one, it doesn’t put you above anyone. It’s one more reason to serve the people.
+            </p>
+          </Reveal>
+          <div className="flex justify-center md:justify-end">
+            <Ambient className="note-art">
+              <HeroSunflower />
+            </Ambient>
+          </div>
         </div>
-        <p className="mt-8 max-w-[40ch] font-serif text-2xl leading-snug text-balance">
-          And if you do graduate with one, it doesn’t put you above anyone. It’s one more reason to serve the people.
-        </p>
-      </Section>
+      </section>
 
-      <section aria-labelledby="cta" className="mx-auto max-w-6xl px-4 pt-8 pb-8 sm:px-6">
-        <Reveal className="grid gap-8 border-t border-foreground pt-12 md:grid-cols-[1fr_auto] md:items-end md:gap-16 md:pt-16">
-          <h2 id="cta" className="max-w-[18ch] text-[2.5rem] sm:text-[3.5rem]">
-            See what your next semester needs.
-          </h2>
+      <section aria-labelledby="cta" className="mx-auto max-w-6xl px-4 sm:px-6">
+        <Reveal className="grid gap-10 border-t border-border py-20 md:grid-cols-[1fr_auto] md:items-end md:gap-16 md:py-28">
           <div>
+            <Wordmark size="sm" animate={false} />
+            <h2 id="cta" className="mt-10 max-w-[18ch] text-[2.5rem] leading-[1.05] tracking-[-0.04em] sm:text-[3.5rem]">
+              See what your next semester needs.
+            </h2>
+          </div>
+          <div className="md:pb-1">
             <Button size="lg" asChild>
               <a href={href('/calculator')}>Check my standing</a>
             </Button>
@@ -195,7 +188,8 @@ export function Landing() {
 
 function HowItWorks() {
   return (
-    <section id="how" aria-labelledby="how-title" className="border-y border-border bg-surface-alt">
+    <section id="how" aria-labelledby="how-title" className="border-b border-border bg-surface-alt">
+      <SablayLine />
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 md:py-24">
         <Reveal>
           <h2 id="how-title" className="text-[2.25rem]">
@@ -212,25 +206,25 @@ function HowItWorks() {
   )
 }
 
-/** Each step number lights up in maroon as it scrolls into view, with a line drawing toward the next. */
+/** Each step number darkens as it scrolls into view, with a line drawing toward the next. */
 function Step({ index, title, text }: { index: number; title: string; text: string }) {
   const [ref, inView] = useInView<HTMLLIElement>()
   return (
     <li ref={ref} className={cn('reveal relative', inView && 'is-visible')} style={{ '--i': index } as CSSProperties}>
       <div className="flex items-center gap-4">
-        <span
+        <kbd
           className={cn(
-            'font-serif text-[1.75rem] leading-none tabular transition-colors duration-500',
-            inView ? 'text-up-maroon' : 'text-faint',
+            'inline-flex size-9 items-center justify-center rounded-md border border-border bg-background font-sans text-body-sm font-semibold tabular transition-colors duration-500',
+            inView ? 'text-foreground' : 'text-faint',
           )}
           style={{ transitionDelay: `${index * 200}ms` }}
         >
-          {String(index + 1).padStart(2, '0')}
-        </span>
+          {index + 1}
+        </kbd>
         {index < STEPS.length - 1 && (
           <span aria-hidden className="hidden h-px flex-1 overflow-hidden md:block">
             <span
-              className={cn('block h-full origin-left bg-up-maroon/40 transition-transform duration-700', inView ? 'scale-x-100' : 'scale-x-0')}
+              className={cn('block h-full origin-left bg-border-strong transition-transform duration-700', inView ? 'scale-x-100' : 'scale-x-0')}
               style={{ transitionDelay: `${index * 200 + 200}ms` }}
             />
           </span>
@@ -347,7 +341,19 @@ function Faq() {
  * The reference sections share one grid: heading on the left, content on the right, on the same
  * container as the hero, so every section starts at the same edge.
  */
-function Section({ id, title, intro, divider, children }: { id: string; title: string; intro?: ReactNode; divider?: boolean; children: ReactNode }) {
+function Section({
+  id,
+  title,
+  intro,
+  divider,
+  children,
+}: {
+  id: string
+  title: string
+  intro?: ReactNode
+  divider?: boolean
+  children: ReactNode
+}) {
   return (
     <section id={id} aria-labelledby={`${id}-title`} className="mx-auto max-w-6xl px-4 sm:px-6">
       <div className={cn('grid gap-8 py-16 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-16 md:py-24', divider && 'border-t border-border')}>
@@ -360,5 +366,113 @@ function Section({ id, title, intro, divider, children }: { id: string; title: s
         <div>{children}</div>
       </div>
     </section>
+  )
+}
+
+/** The hero's example: the results card in a plain window frame. Made-up numbers, labelled as such. */
+function RoadmapPreview() {
+  return (
+    <figure>
+      <div className="overflow-hidden rounded-xl border border-border bg-background">
+        <div aria-hidden className="flex items-center gap-1.5 border-b border-border px-4 py-3">
+          <span className="size-2.5 rounded-full bg-border" />
+          <span className="size-2.5 rounded-full bg-border" />
+          <span className="size-2.5 rounded-full bg-border" />
+          <span className="ml-3 text-caption text-muted-foreground">Your roadmap</span>
+        </div>
+        <div className="p-6 sm:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="meta-label">Your goal</p>
+            <Badge tone="green">Within reach</Badge>
+          </div>
+          <p className="mt-2 text-2xl font-semibold tracking-[-0.03em]">Magna cum laude</p>
+          <p className="text-body-sm text-muted-foreground">Final GWA of 1.4500 or better</p>
+          <p className="mt-6 meta-label">What you need each semester</p>
+          <p className="mt-1 flex items-baseline gap-2">
+            <span className="font-display text-[3.5rem] leading-none text-up-maroon tabular">1.41</span>
+            <span className="text-lg font-medium">or better</span>
+          </p>
+          <ul className="mt-6 border-t border-border">
+            {EXAMPLE.map((row) => (
+              <li key={row.sem} className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 border-b border-border py-2.5 text-body-sm">
+                <span>
+                  {row.sem} <span className="text-muted-foreground">· {row.units} units</span>
+                </span>
+                <span className="tabular text-up-maroon">{row.target.toFixed(2)}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-5">
+            <div aria-hidden className="h-1.5 overflow-hidden rounded-full bg-neutral-tint">
+              <div className="h-full w-[51%] rounded-full bg-up-green" />
+            </div>
+            <p className="mt-1.5 text-caption text-muted-foreground">79 of 155 units done</p>
+          </div>
+        </div>
+      </div>
+      <figcaption className="mt-3 text-caption text-muted-foreground">Example roadmap, not a real student’s grades.</figcaption>
+    </figure>
+  )
+}
+
+/**
+ * Try a target: the slider sets a semester GWA and the six courses below show one way to meet it.
+ * The same grade mix the results page uses, so the example never disagrees with the calculator.
+ */
+function TargetDemo() {
+  const id = useId()
+  const [target, setTarget] = useState(1.41)
+  const grades = exampleGrades(target) ?? []
+  const best = Math.min(...grades)
+  const avg = grades.reduce((a, b) => a + b, 0) / (grades.length || 1)
+  return (
+    <div className="grid gap-12 rounded-xl bg-surface-alt p-6 sm:p-12 md:grid-cols-[1fr_1.15fr] md:gap-16">
+      <div>
+        <h3 className="text-2xl">The GWA you need, in real grades</h3>
+        <p className="mt-3 max-w-[44ch] text-muted-foreground">
+          A target like 1.41 is hard to picture. BELaude turns it into the grades that get you there, for every semester you
+          have left. Try one.
+        </p>
+        <label htmlFor={id} className="mt-10 block meta-label">
+          Semester GWA to aim for
+        </label>
+        <output htmlFor={id} className="mt-1 block font-display text-[3.5rem] leading-none text-up-maroon tabular">
+          {target.toFixed(2)}
+        </output>
+        <input
+          id={id}
+          type="range"
+          min={1}
+          max={3}
+          step={0.01}
+          value={target}
+          onChange={(e) => setTarget(Number(e.target.value))}
+          className="target-range mt-5 w-full"
+        />
+        <div aria-hidden className="mt-1 flex justify-between text-caption text-muted-foreground">
+          <span>1.00, best</span>
+          <span>3.00</span>
+        </div>
+      </div>
+      <div className="md:pt-1">
+        <p className="meta-label">One semester of 6 courses that meets it</p>
+        <ul className="mt-4 grid grid-cols-3 gap-2">
+          {grades.map((g, i) => (
+            <li
+              key={i}
+              className={cn(
+                'grade-chip flex h-16 items-center justify-center rounded-lg border text-2xl font-medium tabular',
+                g === best && grades.some((x) => x !== best) ? 'border-transparent bg-green-tint text-green-ink' : 'border-border bg-background',
+              )}
+            >
+              {g.toFixed(2)}
+            </li>
+          ))}
+        </ul>
+        <p aria-live="polite" className="mt-5 text-body-sm">
+          <span className="tabular">{avg.toFixed(4)}</span> average. <span className="text-muted-foreground">{mixHint(target)}</span>
+        </p>
+      </div>
+    </div>
   )
 }

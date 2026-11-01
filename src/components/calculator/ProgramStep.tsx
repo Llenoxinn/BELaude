@@ -167,14 +167,14 @@ function ProgramSummary({ program, onEdit }: { program: Program; onEdit: () => v
         <dl className="mt-6 grid grid-cols-2 gap-6">
           <div>
             <dt className="meta-label">Units in your GWA</dt>
-            <dd className="mt-2 font-serif text-[2.5rem] leading-none tabular">{gwaUnits}</dd>
+            <dd className="mt-2 font-display text-[2.5rem] leading-none tabular">{gwaUnits}</dd>
             {gwaUnits !== program.totalUnits && (
               <dd className="mt-1.5 text-caption text-muted-foreground">of {program.totalUnits} in the study plan</dd>
             )}
           </div>
           <div>
             <dt className="meta-label">Semesters</dt>
-            <dd className="mt-2 font-serif text-[2.5rem] leading-none tabular">{regular}</dd>
+            <dd className="mt-2 font-display text-[2.5rem] leading-none tabular">{regular}</dd>
             {midyear > 0 && (
               <dd className="mt-1.5 text-caption text-muted-foreground">
                 plus {midyear} midyear term{midyear > 1 ? 's' : ''}

@@ -1,6 +1,7 @@
 import { ArrowSquareOut, GithubLogo } from '@phosphor-icons/react'
 import { CampusScene } from '@/components/ascii'
 import { ReportButton } from '@/components/ReportDialog'
+import { SablayLine } from '@/components/SablayLine'
 import { Button } from '@/components/ui/button'
 import { useMotion } from '@/lib/motion'
 import { href } from '@/lib/router'
@@ -20,14 +21,15 @@ function OutLink({ href, children }: { href: string; children: string }) {
 export function SiteFooter() {
   const { reduced, preference, setPreference } = useMotion()
   return (
-    <footer className="mt-24 border-t border-border bg-surface-alt sm:mt-32">
+    <footer className="mt-24 bg-surface-alt sm:mt-32">
+      <SablayLine />
       <div className="mx-auto max-w-6xl px-4 pt-12 sm:px-6 sm:pt-16">
         <CampusScene className="text-up-maroon" />
       </div>
 
       <div className="mx-auto grid max-w-6xl gap-12 px-4 pt-12 pb-12 sm:px-6 md:grid-cols-[1.2fr_1fr] md:gap-16 md:pt-16">
         <div>
-          <h2 className="font-serif text-3xl leading-tight">Wanna work with me?</h2>
+          <h2 className="font-display text-3xl leading-tight">Wanna work with me?</h2>
           <p className="mt-2 max-w-[40ch] text-body-sm text-muted-foreground">
             Have a project, an idea or a role in mind? My other work is on GitHub, and so is a way to reach me.
           </p>

@@ -20,27 +20,33 @@
   --up-green: #00573f;
   --up-gold: #f5b21a;
   --up-black: #111111;
+  /* From the UP sablay: the painted gold of its baybayin figure and the navy squares of its border */
+  --logo-gold: #f5c211;
+  --sablay-navy: #2f4f7f;
 
   --bg: #ffffff;
   --surface: #ffffff;
-  --surface-alt: #faf9f7;
+  --surface-alt: #f7f6f3; /* warm bone: the one step off white */
   --hairline: #eaeaea;
   --hairline-strong: #cfcdc8; /* hover edge on cards */
   --text: #111111;
   --text-muted: #6b6a66; /* 5.41:1 on white */
   --text-faint: #73716c; /* 4.88:1 on white, 4.63:1 on surface-alt */
 
-  --maroon-tint: #f8eaee;
-  --green-tint: #e8f1ee;
-  --gold-tint: #fcf4dc;
-  --gold-ink: #6b4a00;
+  /* V2.0: washed-out pastels, for tags and zones only. One per honor: summa gold, magna green, cum laude red */
+  --maroon-tint: #fdebec;
+  --green-tint: #edf3ec;
+  --gold-tint: #fbf3db;
+  --gold-ink: #7a5200; /* 6.6:1 on gold-tint */
+  --green-ink: #346538;
+  --maroon-ink: #9f2f2d;
   --art-gold: #e0a000; /* petals in the dot art: a touch deeper than --up-gold so thin dots stay visible */
   --neutral-tint: #f1f0ed;
 
   /* Honors zones on the GWA scale, darkest for the highest honor */
-  --zone-summa: #cfe3db;
-  --zone-magna: #dcebe5;
-  --zone-cum: var(--green-tint);
+  --zone-summa: var(--gold-tint);
+  --zone-magna: var(--green-tint);
+  --zone-cum: var(--maroon-tint);
   --zone-none: var(--neutral-tint);
 
   /* shadcn theme tokens */
@@ -90,10 +96,11 @@
   --color-green-tint: var(--green-tint);
   --color-gold-tint: var(--gold-tint);
   --color-gold-ink: var(--gold-ink);
+  --color-green-ink: var(--green-ink);
+  --color-maroon-ink: var(--maroon-ink);
   --color-art-gold: var(--art-gold);
   --color-neutral-tint: var(--neutral-tint);
 
-  --font-serif: 'Newsreader Variable', Georgia, serif;
   --font-sans: 'Geist Variable', 'Helvetica Neue', Helvetica, system-ui, sans-serif;
   /* No monospace face: numbers use Geist with tabular figures so columns still line up */
   --font-mono: var(--font-sans);
@@ -131,12 +138,12 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  /* V2.0: headings in Geist, set heavier and tighter instead of switching face */
   h1,
   h2,
   h3 {
-    font-family: var(--font-serif);
-    font-weight: 500;
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    letter-spacing: -0.03em;
     text-wrap: balance;
   }
   /* Display headings sit tight; smaller headings get room to wrap */
@@ -148,7 +155,7 @@
   }
   h3 {
     line-height: 1.25;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
   }
   p {
     text-wrap: pretty;
@@ -159,6 +166,10 @@
   }
   /* Programmatic focus targets (route and step headings) don't draw a ring */
   [tabindex='-1']:focus:not(:focus-visible) {
+    outline: none;
+  }
+  /* The page body takes focus after a route change or the skip link; a ring around the whole page helps no one */
+  #main:focus {
     outline: none;
   }
   ::selection {
@@ -174,6 +185,11 @@
 }
 
 @layer utilities {
+  /* Big numbers and display lines: Geist, semibold, tracked in */
+  .font-display {
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
   .tabular {
     font-variant-numeric: tabular-nums;
   }
@@ -511,5 +527,51 @@ html[data-motion='reduce'] .reveal:not(.is-visible) {
 @media (prefers-reduced-motion: reduce) {
   .faq details::details-content {
     transition: none;
+  }
+}
+
+/* V2.0: one soft warm light behind the hero, barely there */
+.hero-glow::before {
+  content: '';
+  position: absolute;
+  inset: -10% -20% auto auto;
+  width: 60%;
+  aspect-ratio: 1;
+  background: radial-gradient(closest-side, rgb(245 178 26 / 0.07), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Target demo: a plain slider in ink, and grade chips that change colour without a jump */
+.target-range {
+  accent-color: var(--up-black);
+  height: 2.75rem;
+  cursor: pointer;
+}
+.grade-chip {
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+
+/* The note's sunflower: a set size, so the art never runs into the text beside it */
+.note-art .braille {
+  font-size: 7px;
+}
+@media (min-width: 64rem) {
+  .note-art .braille {
+    font-size: 9px;
+  }
+}
+/* It keeps swaying gently in the breeze while it is on screen; the footer's Reduce motion switch stops it */
+@media (prefers-reduced-motion: no-preference) {
+  .note-art .sway {
+    transform-origin: 50% 100%;
+    animation: sway 6s var(--ease-in-out) infinite;
+  }
+  .note-art[data-offscreen='true'] .sway,
+  html[data-hidden='true'] .note-art .sway {
+    animation-play-state: paused;
   }
 }

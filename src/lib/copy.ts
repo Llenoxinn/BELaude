@@ -61,7 +61,7 @@ export function statusCopy(res: Results): StatusCopy {
       return main
         ? {
             headline: `You finished within ${main.tier.name} range.`,
-            body: `Your final GWA is ${fmt.gwa(res.cumulativeGwa!)}. The University Registrar makes the official determination.`,
+            body: `Your final GWA is ${fmt.gwa(res.cumulativeGwa!)}.`,
             badge: { label: 'Complete', tone: 'green' },
           }
         : {
