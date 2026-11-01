@@ -22,17 +22,17 @@ export function canShare(res: Results): boolean {
 }
 
 /**
- * The "Laude Roadmap" card (design.md 5.5): 1200 x 630, white, the target large in maroon, a mini
- * roadmap and the wordmark. No name and no grades.
+ * The "Laude Roadmap" card (design.md 5.5): 1200 x 630. The goal and the target, large in maroon,
+ * on the left; the semesters ahead on a tinted panel on the right. No name and no grades.
  */
 export async function renderShareCard(res: Results): Promise<Blob | null> {
   const focus = res.focus
   if (!focus || !canShare(res)) return null
   await Promise.all(
-    ['500 68px', '500 150px'].map((s) => document.fonts.load(`${s} ${FONTS.serif}`)).concat([
+    ['500 60px', '500 140px'].map((s) => document.fonts.load(`${s} ${FONTS.serif}`)).concat([
       document.fonts.load(`30px ${FONTS.sans}`),
       document.fonts.load(`600 24px ${FONTS.sans}`),
-      document.fonts.load(`22px ${FONTS.pixel}`),
+      document.fonts.load(`20px ${FONTS.pixel}`),
     ]),
   ).catch(() => undefined)
 
@@ -42,115 +42,125 @@ export async function renderShareCard(res: Results): Promise<Blob | null> {
   const ctx = canvas.getContext('2d')
   if (!ctx) return null
 
+  // Two zones: the goal on the left, the semester list on a tinted panel on the right
+  const PANEL = 700
+  const L = 72
+  const LW = PANEL - L - 56 // usable width on the left
+  const R0 = PANEL + 48
+  const R1 = W - 72
+
   ctx.fillStyle = '#FFFFFF'
   ctx.fillRect(0, 0, W, H)
+  ctx.fillStyle = '#FAF9F7'
+  ctx.fillRect(PANEL, 0, W - PANEL, H)
   ctx.strokeStyle = C.hairline
   ctx.lineWidth = 2
   ctx.strokeRect(1, 1, W - 2, H - 2)
   ctx.textBaseline = 'alphabetic'
 
+  /** Sets the font at `size`, shrinking it until `text` fits in `max` pixels. */
+  const fit = (text: string, weight: string, size: number, family: string, max: number) => {
+    let px = size
+    do ctx.font = `${weight} ${px}px ${family}`.trim()
+    while (ctx.measureText(text).width > max && --px > 12)
+  }
+
   const required = focus.plan.required ?? focus.required
   const locked = focus.status === 'locked' || required > 5
+  const n = res.upcoming.length
 
-  ctx.fillStyle = C.muted
-  ctx.font = `600 22px ${FONTS.sans}`
-  ctx.fillText('Laude Roadmap', 72, 96)
+  // Wordmark as the card's header
+  const lines = [
+    { text: 'BE LOUD', bg: C.maroon, fg: '#FFFFFF' },
+    { text: 'BE A', bg: C.green, fg: '#FFFFFF' },
+    { text: 'LAUDE', bg: C.gold, fg: C.black },
+  ]
+  ctx.font = `20px ${FONTS.pixel}`
+  lines.forEach((l, i) => {
+    const y = 56 + i * 34
+    ctx.fillStyle = l.bg
+    ctx.fillRect(L, y, ctx.measureText(l.text).width + 20, 30)
+    ctx.fillStyle = l.fg
+    ctx.fillText(l.text, L + 10, y + 22)
+  })
 
+  // The goal
+  const title = `My path to ${focus.tier.short}`
+  fit(title, '500', 60, FONTS.serif, LW)
   ctx.fillStyle = C.black
-  ctx.font = `500 68px ${FONTS.serif}`
-  ctx.fillText(`My path to ${focus.tier.short}`, 72, 172)
+  ctx.fillText(title, L, 246)
+
   ctx.fillStyle = C.muted
   ctx.font = `600 22px ${FONTS.sans}`
-  ctx.fillText(locked ? 'Secured by the numbers' : 'Semester GWA to aim for', 72, 222)
+  ctx.fillText(locked ? 'Secured by the numbers' : 'Semester GWA to aim for', L, 296)
 
-  ctx.fillStyle = C.maroon
-  ctx.font = `500 150px ${FONTS.serif}`
   const big = locked ? 'Secured' : fmt.target(required)
-  ctx.fillText(big, 66, 338)
+  fit(big, '500', 140, FONTS.serif, LW - 170)
+  ctx.fillStyle = C.maroon
+  ctx.fillText(big, L - 4, 430)
   if (!locked) {
     const w = ctx.measureText(big).width
     ctx.fillStyle = C.muted
-    ctx.font = `34px ${FONTS.sans}`
-    ctx.fillText('or better', 66 + w + 20, 338)
+    ctx.font = `32px ${FONTS.sans}`
+    ctx.fillText('or better', L + w + 16, 430)
   }
 
-  const n = res.upcoming.length
-  ctx.fillStyle = C.muted
-  ctx.font = `30px ${FONTS.sans}`
-  ctx.fillText(
-    locked ? `final GWA stays ${focus.tier.maxGwa.toFixed(2)} or better` : `each of the next ${n} semester${n === 1 ? '' : 's'} · final GWA goal ${focus.tier.maxGwa.toFixed(2)}`,
-    72,
-    396,
-  )
+  const sub = locked ? `My final GWA stays ${focus.tier.maxGwa.toFixed(2)} or better.` : `In each of my next ${n} semester${n === 1 ? '' : 's'}.`
+  fit(sub, '', 28, FONTS.sans, LW)
+  ctx.fillStyle = C.black
+  ctx.fillText(sub, L, 484)
 
   const stretch = focus.status === 'stretch'
   ctx.fillStyle = stretch ? C.gold : C.green
   ctx.beginPath()
-  ctx.arc(81, 446, 8, 0, Math.PI * 2)
+  ctx.arc(L + 8, 550, 8, 0, Math.PI * 2)
   ctx.fill()
   ctx.fillStyle = C.black
   ctx.font = `600 22px ${FONTS.sans}`
-  ctx.fillText(stretch ? 'Stretch' : 'On track', 100, 454)
+  const statusText = stretch ? 'Stretch' : 'On track'
+  ctx.fillText(statusText, L + 26, 558)
+  if (!locked) {
+    ctx.fillStyle = C.muted
+    ctx.font = `22px ${FONTS.sans}`
+    ctx.fillText(`Final GWA goal ${focus.tier.maxGwa.toFixed(2)}`, L + 26 + ctx.measureText(statusText).width + 40, 558)
+  }
 
-  // Mini roadmap
-  const rows = res.upcoming.slice(0, 5)
-  const x0 = 720
-  const x1 = W - 72
+  // The semesters, on the panel
+  const rows = res.upcoming.slice(0, 6)
   ctx.font = `600 20px ${FONTS.sans}`
   ctx.fillStyle = C.muted
-  ctx.fillText('Semester', x0, 140)
+  ctx.fillText('Semester', R0, 96)
   ctx.textAlign = 'right'
-  ctx.fillText('Aim for', x1, 140)
+  ctx.fillText('Aim for', R1, 96)
   ctx.textAlign = 'left'
   rows.forEach((u, i) => {
-    const y = 160 + i * 64
+    const y = 116 + i * 60
     ctx.strokeStyle = C.hairline
     ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.moveTo(x0, y)
-    ctx.lineTo(x1, y)
+    ctx.moveTo(R0, y)
+    ctx.lineTo(R1, y)
     ctx.stroke()
     ctx.fillStyle = C.black
-    ctx.font = `24px ${FONTS.sans}`
-    ctx.fillText(u.label.replace(', AY ', ' · '), x0, y + 42)
+    fit(u.label, '', 23, FONTS.sans, R1 - R0 - 110)
+    ctx.fillText(u.label, R0, y + 39)
     const t = focus.plan.semesters[i]?.target
     ctx.textAlign = 'right'
     ctx.fillStyle = C.maroon
-    ctx.font = `600 28px ${FONTS.sans}`
-    ctx.fillText(t === undefined || !Number.isFinite(t) ? '' : t > 5 ? 'any' : fmt.target(t), x1, y + 42)
+    ctx.font = `600 27px ${FONTS.sans}`
+    ctx.fillText(t === undefined || !Number.isFinite(t) ? '' : t > 5 ? 'Any' : fmt.target(t), R1, y + 39)
     ctx.textAlign = 'left'
   })
   if (res.upcoming.length > rows.length) {
     ctx.fillStyle = C.muted
     ctx.font = `20px ${FONTS.sans}`
-    ctx.fillText(`+ ${res.upcoming.length - rows.length} more`, x0, 160 + rows.length * 64 + 36)
+    ctx.fillText(`and ${res.upcoming.length - rows.length} more`, R0, 116 + rows.length * 60 + 34)
   }
 
-  // Wordmark, bottom left
-  const lines = [
-    { text: 'BE LOUD', bg: C.maroon, fg: '#FFFFFF', border: false },
-    { text: 'BE A', bg: C.green, fg: '#FFFFFF', border: false },
-    { text: 'LAUDE', bg: C.gold, fg: C.black, border: false },
-  ]
-  ctx.font = `22px ${FONTS.pixel}`
-  lines.forEach((l, i) => {
-    const y = 488 + i * 38
-    const w = ctx.measureText(l.text).width + 24
-    ctx.fillStyle = l.bg
-    ctx.fillRect(72, y, w, 34)
-    if (l.border) {
-      ctx.strokeStyle = C.black
-      ctx.lineWidth = 2
-      ctx.strokeRect(73, y + 1, w - 2, 32)
-    }
-    ctx.fillStyle = l.fg
-    ctx.fillText(l.text, 84, y + 25)
-  })
-
+  const note = 'Unofficial. Final honors are determined by UP.'
+  fit(note, '', 17, FONTS.sans, R1 - R0)
   ctx.fillStyle = C.muted
-  ctx.font = `18px ${FONTS.sans}`
-  ctx.textAlign = 'right'
-  ctx.fillText('Unofficial. Final honors are determined by UP.', x1, H - 56)
+  ctx.fillText(note, R0, H - 48)
 
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
 }
