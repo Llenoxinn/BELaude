@@ -487,7 +487,7 @@ function TierCard({ tier, focused, onSelect }: { tier: TierResult; focused: bool
       aria-pressed={focused}
       onClick={onSelect}
       className={cn(
-        'rounded-xl border bg-background p-5 text-left transition-[border-color,box-shadow] duration-200 disabled:cursor-default disabled:opacity-70',
+        'rounded-xl border bg-background p-4 text-left sm:p-5 transition-[border-color,box-shadow] duration-200 disabled:cursor-default disabled:opacity-70',
         focused ? 'border-up-black shadow-[0_0_0_1px_var(--up-black)]' : 'border-border enabled:hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)]',
       )}
     >
@@ -499,7 +499,7 @@ function TierCard({ tier, focused, onSelect }: { tier: TierResult; focused: bool
         </Laurel>
       </span>
       {/* Buttons only take phrasing content, so the pairs are spans, not a <dl> */}
-      <span className="mt-3 block space-y-2 text-caption">
+      <span className="mt-3 grid grid-cols-2 gap-3 text-caption sm:block sm:space-y-2">
         <span className="block">
           <span className="block text-muted-foreground">Final GWA needed</span>
           <span className="block tabular">{tier.tier.maxGwa.toFixed(4)} or better</span>

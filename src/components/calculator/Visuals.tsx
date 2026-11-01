@@ -85,7 +85,9 @@ export function GwaScale({ markers, range, focus }: { markers: ScaleMarker[]; ra
       ))}
     </>
   )
-  const row = 'grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_6.5rem] items-center gap-x-4 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_9rem]'
+  const row = 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 md:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_9rem]'
+  const plotCell = 'col-span-2 row-start-2 md:col-span-1 md:col-start-2 md:row-start-1'
+  const valueCell = 'col-start-2 row-start-1 md:col-start-3'
 
   return (
     <figure className="w-full">
@@ -96,8 +98,8 @@ export function GwaScale({ markers, range, focus }: { markers: ScaleMarker[]; ra
 
       {/* Region names over the plot */}
       <div className={row}>
-        <span />
-        <div className="relative h-6">
+        <span className="hidden md:block" />
+        <div className={cn('relative h-6', plotCell, 'row-start-1')}>
           {zones(max).map((z) => {
             const width = pct(z.to) - pct(z.from)
             if (width < 4) return null
@@ -112,20 +114,20 @@ export function GwaScale({ markers, range, focus }: { markers: ScaleMarker[]; ra
             )
           })}
         </div>
-        <span className="text-right text-label text-muted-foreground">Final GWA</span>
+        <span className="hidden text-right text-label text-muted-foreground md:block">Final GWA</span>
       </div>
 
       <ul>
         {range && (
           <li className={row}>
-            <span className="py-3 text-body-sm">Possible final GWA</span>
-            <div className="relative h-12">
+            <span className="pt-3 text-body-sm md:py-3">Possible final GWA</span>
+            <div className={cn('relative h-10 md:h-12', plotCell)}>
               <Bands />
               <span aria-hidden className="absolute top-1/2 h-0.5 -translate-y-1/2 bg-up-black" style={{ left: `${pct(range.best)}%`, width: `${pct(range.worst) - pct(range.best)}%` }} />
               <span aria-hidden className="absolute top-1/2 h-3 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-up-black" style={{ left: `${pct(range.best)}%` }} />
               <span aria-hidden className="absolute top-1/2 h-3 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-up-black" style={{ left: `${pct(range.worst)}%` }} />
             </div>
-            <span className="text-right text-body-sm tabular">
+            <span className={cn('pt-3 text-right text-body-sm tabular md:pt-0', valueCell)}>
               {fmt.gwa(range.best)}–{fmt.gwa(range.worst)}
             </span>
           </li>
@@ -134,12 +136,12 @@ export function GwaScale({ markers, range, focus }: { markers: ScaleMarker[]; ra
           const tier = tierForGwa(m.value)
           return (
             <li key={m.label} className={row}>
-              <span className="py-3 text-body-sm">{m.label}</span>
-              <div className="relative h-12">
+              <span className="pt-3 text-body-sm md:py-3">{m.label}</span>
+              <div className={cn('relative h-10 md:h-12', plotCell)}>
                 <Bands />
                 <span aria-hidden className={cn('absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full', MARKER_SHAPE[m.tone])} style={{ left: `${pct(m.value)}%` }} />
               </div>
-              <span className="flex items-center justify-end gap-2 text-body-sm">
+              <span className={cn('flex items-center justify-end gap-2 pt-3 text-body-sm md:pt-0', valueCell)}>
                 <span className="tabular font-medium">{fmt.gwa(m.value)}</span>
                 <span className={cn('hidden rounded-full px-2 py-0.5 text-label font-medium sm:inline', tier ? TAG[tier.id] : 'bg-neutral-tint text-muted-foreground')}>
                   {tier ? tier.short : 'None'}
@@ -152,8 +154,8 @@ export function GwaScale({ markers, range, focus }: { markers: ScaleMarker[]; ra
 
       {/* x-axis */}
       <div className={row}>
-        <span />
-        <div className="relative h-8 border-t border-[var(--text-faint)]">
+        <span className="hidden md:block" />
+        <div className={cn('relative h-8 border-t border-[var(--text-faint)]', plotCell, 'row-start-1')}>
           {ticks.map((t, i) => (
             <span key={t} className="absolute top-0 flex flex-col items-center" style={{ left: `${pct(t)}%`, transform: 'translateX(-50%)' }}>
               <span aria-hidden className="h-1.5 w-px bg-[var(--text-faint)]" />
@@ -161,12 +163,12 @@ export function GwaScale({ markers, range, focus }: { markers: ScaleMarker[]; ra
             </span>
           ))}
         </div>
-        <span />
+        <span className="hidden md:block" />
       </div>
       <div className={row}>
-        <span />
-        <p className="mt-1 text-center text-caption text-muted-foreground">Final GWA (lower is better)</p>
-        <span />
+        <span className="hidden md:block" />
+        <p className={cn('mt-1 text-center text-caption text-muted-foreground', plotCell, 'row-start-1')}>Final GWA (lower is better)</p>
+        <span className="hidden md:block" />
       </div>
 
       <p className="mt-4 max-w-[72ch] text-caption text-muted-foreground">

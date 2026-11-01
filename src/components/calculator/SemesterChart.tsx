@@ -61,6 +61,8 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
   }, [])
 
   const [hover, setHover] = useState<number | null>(null)
+  const narrow = width < 520
+  const pad = narrow ? { top: 34, right: 60, bottom: 64, left: 40 } : PAD
   const focus = res.focus
   let points = 0
   let units = 0
@@ -96,12 +98,12 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
     (t) => t.id === goal?.id || (t.maxGwa >= Math.min(...values) - 0.15 && t.maxGwa <= Math.max(...values) + 0.15),
   )
   const { lo, hi, step } = fitDomain([...values, ...cutoffs.map((t) => t.maxGwa)])
-  const innerW = width - PAD.left - PAD.right
-  const innerH = HEIGHT - PAD.top - PAD.bottom
+  const innerW = width - pad.left - pad.right
+  const innerH = HEIGHT - pad.top - pad.bottom
   const colW = innerW / cols.length
-  const cx = (i: number) => PAD.left + colW * (i + 0.5)
-  const y = (v: number) => PAD.top + ((Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * innerH
-  const base = PAD.top + innerH
+  const cx = (i: number) => pad.left + colW * (i + 0.5)
+  const y = (v: number) => pad.top + ((Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * innerH
+  const base = pad.top + innerH
   const ticks: number[] = []
   for (let t = lo; t <= hi + 1e-9; t += step) ticks.push(Math.round(t * 100) / 100)
 
@@ -157,19 +159,21 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
         {/* Grid and y-axis: recessive */}
         {ticks.map((t) => (
           <g key={t}>
-            <line x1={PAD.left} x2={width - PAD.right} y1={y(t)} y2={y(t)} stroke="var(--hairline)" />
-            <text x={PAD.left - 10} y={y(t) + 4} textAnchor="end" className="fill-[var(--text-muted)] text-label tabular">
+            <line x1={pad.left} x2={width - pad.right} y1={y(t)} y2={y(t)} stroke="var(--hairline)" />
+            <text x={pad.left - 10} y={y(t) + 4} textAnchor="end" className="fill-[var(--text-muted)] text-label tabular">
               {t.toFixed(2)}
             </text>
           </g>
         ))}
-        <text
-          transform={`translate(16 ${PAD.top + innerH / 2}) rotate(-90)`}
-          textAnchor="middle"
-          className="fill-[var(--text-muted)] text-caption"
-        >
-          GWA (1.00 is best)
-        </text>
+        {narrow ? (
+          <text x={0} y={12} className="fill-[var(--text-muted)] text-label">
+            GWA (1.00 is best)
+          </text>
+        ) : (
+          <text transform={`translate(16 ${pad.top + innerH / 2}) rotate(-90)`} textAnchor="middle" className="fill-[var(--text-muted)] text-caption">
+            GWA (1.00 is best)
+          </text>
+        )}
 
         {/* Honors cutoffs: reference lines, labelled in the right margin; the goal's in maroon */}
         {cutoffs.map((t) => {
@@ -177,16 +181,25 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
           return (
             <g key={t.id}>
               <line
-                x1={PAD.left}
-                x2={width - PAD.right}
+                x1={pad.left}
+                x2={width - pad.right}
                 y1={y(t.maxGwa)}
                 y2={y(t.maxGwa)}
                 stroke={isGoal ? 'var(--up-maroon)' : 'var(--hairline-strong)'}
                 strokeWidth={isGoal ? 1.25 : 1}
                 strokeDasharray={isGoal ? undefined : '3 3'}
               />
-              <text x={width - PAD.right + 8} y={y(t.maxGwa) + 4} className={`text-label tabular ${isGoal ? 'fill-up-maroon font-semibold' : 'fill-[var(--text-muted)]'}`}>
-                {t.short} {t.maxGwa.toFixed(2)}
+              <text x={width - pad.right + 6} y={y(t.maxGwa) + (narrow ? -2 : 4)} className={`text-label tabular ${isGoal ? 'fill-up-maroon font-semibold' : 'fill-[var(--text-muted)]'}`}>
+                {narrow ? (
+                  <>
+                    <tspan>{t.short}</tspan>
+                    <tspan x={width - pad.right + 6} dy={12}>
+                      {t.maxGwa.toFixed(2)}
+                    </tspan>
+                  </>
+                ) : (
+                  `${t.short} ${t.maxGwa.toFixed(2)}`
+                )}
               </text>
             </g>
           )
@@ -195,8 +208,8 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
         {/* Now: where the record ends and the plan begins */}
         {pastCount > 0 && pastCount < cols.length && (
           <g>
-            <line x1={PAD.left + colW * pastCount} x2={PAD.left + colW * pastCount} y1={PAD.top} y2={base} stroke="var(--text-faint)" strokeDasharray="2 3" />
-            <text x={PAD.left + colW * pastCount + 6} y={PAD.top + 12} className="fill-[var(--text-muted)] text-label">
+            <line x1={pad.left + colW * pastCount} x2={pad.left + colW * pastCount} y1={pad.top} y2={base} stroke="var(--text-faint)" strokeDasharray="2 3" />
+            <text x={pad.left + colW * pastCount + 6} y={pad.top + 12} className="fill-[var(--text-muted)] text-label">
               Now
             </text>
           </g>
@@ -220,8 +233,17 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
             ) : null,
           )}
           {endValue !== null && (
-            <text x={width - PAD.right + 8} y={y(endValue) + 18} className="fill-up-maroon text-label font-semibold tabular">
-              Final {fmt.gwa(endValue)}
+            <text x={width - pad.right + 6} y={y(endValue) + (narrow ? 26 : 18)} className="fill-up-maroon text-label font-semibold tabular">
+              {narrow ? (
+                <>
+                  <tspan>Final</tspan>
+                  <tspan x={width - pad.right + 6} dy={12}>
+                    {fmt.gwa(endValue)}
+                  </tspan>
+                </>
+              ) : (
+                `Final ${fmt.gwa(endValue)}`
+              )}
             </text>
           )}
         </g>
@@ -247,7 +269,7 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
         </g>
 
         {/* x-axis */}
-        <line x1={PAD.left} x2={width - PAD.right} y1={base} y2={base} stroke="var(--text-faint)" />
+        <line x1={pad.left} x2={width - pad.right} y1={base} y2={base} stroke="var(--text-faint)" />
         {cols.map((c, i) => (
           <g key={`l${i}`}>
             <text x={cx(i)} y={base + 18} textAnchor="middle" className={`fill-[var(--text)] ${small ? 'text-label' : 'text-caption'}`}>
@@ -258,17 +280,17 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
             </text>
           </g>
         ))}
-        <text x={PAD.left + innerW / 2} y={HEIGHT - 8} textAnchor="middle" className="fill-[var(--text-muted)] text-caption">
+        <text x={pad.left + innerW / 2} y={HEIGHT - 8} textAnchor="middle" className="fill-[var(--text-muted)] text-caption">
           Semester (year and term)
         </text>
 
         {/* Hover: the whole column is the target */}
         {cols.map((_, i) => (
           <g key={`h${i}`}>
-            {hover === i && <rect x={PAD.left + colW * i} y={PAD.top} width={colW} height={innerH} fill="var(--text)" opacity={0.04} />}
+            {hover === i && <rect x={pad.left + colW * i} y={pad.top} width={colW} height={innerH} fill="var(--text)" opacity={0.04} />}
             <rect
-              x={PAD.left + colW * i}
-              y={PAD.top}
+              x={pad.left + colW * i}
+              y={pad.top}
               width={colW}
               height={innerH + 40}
               fill="transparent"
