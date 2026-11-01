@@ -4,14 +4,16 @@ import { SemesterChart } from './SemesterChart'
 import { ExampleSemester, GwaScale, MiniScale, PointsBudget, type ScaleMarker } from './Visuals'
 import { GrowthSunflower, Laurel, stageName, useRolling } from '@/components/ascii'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { fmt, mixHint, statusCopy, type Tone } from '@/lib/copy'
 import { useMotion } from '@/lib/motion'
 import { computeResults, type Results, type TierResult } from '@/lib/results'
 import { rules } from '@/lib/rules'
 import { canShare, renderShareCard } from '@/lib/shareCard'
-import { rulesVerifiedLine } from '@/lib/site'
+import { calcReportUrl, rulesVerifiedLine } from '@/lib/site'
+import { ReportButton } from '@/components/ReportDialog'
+import { activeProgram, parseNumber } from '@/lib/state'
 import { useStore } from '@/lib/store'
 import { cn, downloadBlob } from '@/lib/utils'
 
@@ -102,7 +104,7 @@ export function ResultsView({ onEdit }: { onEdit: (step: number) => void }) {
 
       {/* The goal, and what it takes each semester */}
       <section className="seq-item" style={seq(3)}>
-        {res.state === 'none' ? <BestOutcome res={res} /> : res.state === 'done' ? <FinalOutcome res={res} /> : <GoalCard res={res} skip={skip} />}
+        {res.state === 'none' ? <BestOutcome res={res} /> : res.state === 'done' ? <FinalOutcome res={res} onEdit={() => onEdit(2)} /> : <GoalCard res={res} skip={skip} />}
       </section>
 
       {/* Where you stand on the honors scale */}
@@ -336,7 +338,7 @@ function BestOutcome({ res }: { res: Results }) {
   )
 }
 
-function FinalOutcome({ res }: { res: Results }) {
+function FinalOutcome({ res, onEdit }: { res: Results; onEdit: () => void }) {
   return (
     <div className="rounded-xl border border-border p-6 sm:p-8">
       <p className="meta-label">Your final GWA</p>
@@ -344,6 +346,97 @@ function FinalOutcome({ res }: { res: Results }) {
         {res.cumulativeGwa !== null ? fmt.gwa(res.cumulativeGwa) : 'n/a'}
       </p>
       {res.main && <p className="mt-3 font-serif text-2xl">{res.main.tier.name} range</p>}
+      {res.cumulativeGwa !== null && <RecordCheck ours={res.cumulativeGwa} semesters={res.done.length} onEdit={onEdit} />}
+    </div>
+  )
+}
+
+/** True when the official GWA, at the decimals it was typed with, equals ours rounded or truncated. */
+function sameGwa(ours: number, official: string): boolean {
+  const d = Math.min(4, (official.split('.')[1] ?? '').length)
+  const f = 10 ** d
+  const target = Math.round(Number(official) * f)
+  return Math.round(ours * f) === target || Math.floor(ours * f + 1e-9) === target
+}
+
+/** A graduate can check BELaude's math against their transcript; a mismatch lists what to re-check first. */
+function RecordCheck({ ours, semesters, onEdit }: { ours: number; semesters: number; onEdit: () => void }) {
+  const { state, update } = useStore()
+  const official = parseNumber(state.officialGwa)
+  const valid = official !== null && official >= 1 && official <= 5
+  const match = valid && sameGwa(ours, state.officialGwa.trim())
+  const shown = fmt.gwa(ours)
+  const report = { ours: shown, official: state.officialGwa.trim(), program: activeProgram(state)?.name ?? 'Own numbers', semesters }
+
+  return (
+    <div className="mt-8 border-t border-border pt-6">
+      <label htmlFor="official-gwa" className="text-body-sm font-medium">
+        Check it against your transcript
+      </label>
+      <p id="official-gwa-hint" className="mt-1 max-w-[56ch] text-caption text-muted-foreground">
+        Type the GWA on your transcript of records. BELaude tells you if its math agrees.
+      </p>
+      <Input
+        id="official-gwa"
+        inputMode="decimal"
+        autoComplete="off"
+        placeholder="1.6000"
+        className="mt-3 max-w-40 tabular"
+        value={state.officialGwa}
+        aria-describedby="official-gwa-hint"
+        onChange={(e) => update((s) => ({ ...s, officialGwa: e.target.value }))}
+      />
+
+      {/* Rendered empty first so the verdict is announced when it appears; the checklist sits outside it */}
+      <div role="status" className="mt-4">
+        {valid && match && (
+          <p className="flex items-start gap-2 text-body-sm text-up-green">
+            <CheckCircle aria-hidden weight="fill" className="mt-0.5 size-4 shrink-0" />
+            It matches. BELaude’s {shown} agrees with your transcript.
+          </p>
+        )}
+        {valid && !match && (
+          <p className="flex items-start gap-2 text-body-sm font-medium text-up-maroon">
+            <WarningCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
+            These don’t match: BELaude has {shown}, your transcript has {state.officialGwa.trim()}.
+          </p>
+        )}
+      </div>
+      {valid && !match && (
+        <div className="mt-3 rounded-lg border border-up-maroon/40 bg-maroon-tint/50 p-4">
+          <p className="text-body-sm">Before trusting either number, check what you entered:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-body-sm text-muted-foreground">
+            <li>Every semester and midyear you took is listed, including extra or repeated ones.</li>
+            <li>Each semester’s units count only GWA courses: NSTP and PE are left out.</li>
+            <li>Grades that changed later are updated, such as a completed INC or 4.00.</li>
+            <li>Dropped courses and courses graded P, S or U are left out.</li>
+          </ul>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button variant="outline" size="sm" onClick={onEdit}>
+              <PencilSimple aria-hidden /> Review my grades
+            </Button>
+            <ReportButton
+              className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+              spec={{
+                title: 'Report a calculation problem',
+                subject: `BELaude: GWA mismatch (${report.program})`,
+                facts: [
+                  ['BELaude’s GWA', report.ours],
+                  ['Your transcript', report.official],
+                  ['Program', report.program],
+                  ['Semesters entered', String(report.semesters)],
+                ],
+                noteLabel: 'Anything else?',
+                notePlaceholder: 'For example: I shifted programs in my 2nd year.',
+                fallbackUrl: calcReportUrl(report),
+              }}
+            >
+              Everything’s right? Report it
+            </ReportButton>
+          </div>
+          <p className="mt-2 text-caption text-muted-foreground">The report shares both GWAs and your program, never your grades.</p>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { ArrowSquareOut, CheckCircle, Info, PencilSimple } from '@phosphor-icons/react'
 import { Field, StepNav, useFocusFirstInvalid } from './Field'
+import { ReportButton } from '@/components/ReportDialog'
 import { GLOSSARY, Term } from '@/components/Term'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -213,15 +214,25 @@ function ProgramSummary({ program, onEdit }: { program: Program; onEdit: () => v
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border px-5 py-3 sm:px-6">
         <p className="text-caption text-muted-foreground">Different curriculum for your batch?</p>
         <div className="flex flex-wrap items-center gap-x-4">
-          <a
-            href={PROSPECTUS_ERROR_URL + encodeURIComponent(program.name)}
-            target="_blank"
-            rel="noreferrer"
+          <ReportButton
             className="inline-flex min-h-11 items-center text-caption text-muted-foreground hover:text-foreground"
+            spec={{
+              title: 'Report a study plan error',
+              subject: `BELaude: study plan error (${program.name})`,
+              facts: [
+                ['Program', program.name],
+                ['Curriculum', program.curriculum ? yearRanges(program.curriculum) : 'Not listed'],
+                ['Units BELaude uses', String(programGwaUnits(program))],
+              ],
+              noteLabel: 'What’s wrong?',
+              notePlaceholder: 'For example: 4th year, 2nd sem should be 15 units, not 12.',
+              noteRequired: true,
+              fallbackUrl: PROSPECTUS_ERROR_URL + encodeURIComponent(program.name),
+            }}
           >
             <span className="link-draw">Report an error</span>
-            <span className="sr-only"> in this study plan (opens in a new tab)</span>
-          </a>
+            <span className="sr-only"> in this study plan</span>
+          </ReportButton>
           <Button variant="outline" size="sm" onClick={onEdit}>
             <PencilSimple aria-hidden /> Use my own numbers
           </Button>

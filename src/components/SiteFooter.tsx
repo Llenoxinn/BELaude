@@ -1,5 +1,6 @@
 import { ArrowSquareOut, GithubLogo } from '@phosphor-icons/react'
 import { CampusScene } from '@/components/ascii'
+import { ReportButton } from '@/components/ReportDialog'
 import { Button } from '@/components/ui/button'
 import { useMotion } from '@/lib/motion'
 import { FEEDBACK_URL, GITHUB_PROFILE_URL, REPO_URL, rulesVerifiedLine } from '@/lib/site'
@@ -46,7 +47,20 @@ export function SiteFooter() {
 
           <div className="mt-4 flex flex-wrap items-center gap-x-8 gap-y-1">
             <OutLink href={REPO_URL}>Source code</OutLink>
-            <OutLink href={FEEDBACK_URL}>Send feedback</OutLink>
+            <ReportButton
+              className="inline-flex min-h-11 items-center text-body-sm"
+              spec={{
+                title: 'Send feedback',
+                subject: 'BELaude: feedback',
+                facts: [],
+                noteLabel: 'Your feedback',
+                notePlaceholder: 'A bug, an idea, a program to add…',
+                noteRequired: true,
+                fallbackUrl: FEEDBACK_URL,
+              }}
+            >
+              <span className="link-draw">Send feedback</span>
+            </ReportButton>
             <button
               type="button"
               role="switch"

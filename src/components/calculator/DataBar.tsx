@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { DownloadSimple, UploadSimple } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/dialog'
 import { exportFileName, parseImport } from '@/lib/state'
 import { useStore } from '@/lib/store'
 import { downloadBlob } from '@/lib/utils'
@@ -27,9 +28,7 @@ export function DataBar() {
     if (file.current) file.current.value = ''
   }
 
-  const startOver = () => {
-    if (window.confirm('Clear everything you entered on this device? Export a backup first if you want to keep it.')) reset()
-  }
+  const [confirming, setConfirming] = useState(false)
 
   return (
     <div className="mt-10 rounded-lg bg-surface-alt p-5 text-sm">
@@ -51,12 +50,23 @@ export function DataBar() {
           <Button variant="outline" size="sm" onClick={() => file.current?.click()}>
             <UploadSimple aria-hidden /> Import
           </Button>
-          <Button variant="ghost" size="sm" onClick={startOver}>
+          <Button variant="ghost" size="sm" onClick={() => setConfirming(true)}>
             Start over
           </Button>
           <input ref={file} type="file" accept="application/json,.json" className="hidden" onChange={(e) => importData(e.target.files?.[0])} />
         </div>
       </div>
+      <ConfirmDialog
+        open={confirming}
+        title="Start over?"
+        description="This clears everything you entered on this device. Export a backup first if you want to keep it."
+        confirmLabel="Clear everything"
+        onCancel={() => setConfirming(false)}
+        onConfirm={() => {
+          setConfirming(false)
+          reset()
+        }}
+      />
       {/* Rendered before it has text, so screen readers announce each update */}
       <p role="status" className="mt-2 text-caption text-muted-foreground empty:mt-0">
         {message}

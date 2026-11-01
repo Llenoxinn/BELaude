@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
+import { WarningCircle } from '@phosphor-icons/react'
 import { Field, StepNav, useFocusFirstInvalid } from './Field'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { buildSemesters, currentTerm, semesterLabel, termKey } from '@/lib/state'
+import { applyGraduated, buildSemesters, currentTerm, parseNumber, semesterLabel, termKey } from '@/lib/state'
 import { useStore } from '@/lib/store'
 import { batchError } from '@/lib/validate'
 
@@ -17,11 +18,17 @@ export function BatchStep({ onBack, onNext }: { onBack: () => void; onNext: () =
   const now = useMemo(() => new Date(), [])
   const cur = currentTerm(now)
   const preview = useMemo(() => (valid ? buildSemesters(state, now) : []), [state, valid, now])
+  // Every semester in the study plan is already past: ask, rather than assume, whether they graduated.
+  const allPast = preview.length > 0 && preview.every((s) => s.status === 'done')
+  const gradError = tried && allPast && state.graduated === null ? 'Choose one to continue.' : null
 
   const next = () => {
     setTried((n) => n + 1)
-    if (batchError(state)) return
-    update((s) => ({ ...s, semesters: buildSemesters(s) }))
+    if (batchError(state) || (allPast && state.graduated === null)) return
+    update((s) => {
+      const built = buildSemesters(s)
+      return { ...s, semesters: allPast ? applyGraduated(built, s.graduated === true, parseNumber(s.batchYear)) : built }
+    })
     onNext()
   }
 
@@ -69,11 +76,52 @@ export function BatchStep({ onBack, onNext }: { onBack: () => void; onNext: () =
               )
             })}
           </ul>
-          <p className="mt-3 text-caption text-muted-foreground">
-            Finished this semester already? Mark it as done in the next step. Midyear terms, an extra year or a leave of absence
-            can be added there too.
-          </p>
+          {!allPast && (
+            <p className="mt-3 text-caption text-muted-foreground">
+              Finished this semester already? Mark it as done in the next step. Midyear terms, an extra year or a leave of
+              absence can be added there too.
+            </p>
+          )}
         </div>
+      )}
+
+      {allPast && (
+        <fieldset className="mt-8" aria-describedby={gradError ? 'graduated-error' : 'graduated-hint'}>
+          <legend className="text-lg">Have you graduated?</legend>
+          <p id="graduated-hint" className="mt-1 text-caption text-muted-foreground">
+            Every semester in your study plan is already past.
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {[
+              { v: true, t: 'Yes, I’ve graduated', d: 'Check your final GWA against your transcript.' },
+              { v: false, t: 'Not yet', d: 'Plan the semesters you still have, starting this one.' },
+            ].map(({ v, t, d }, i) => (
+              <label
+                key={t}
+                className="flex cursor-pointer gap-3 rounded-lg border border-border p-4 transition-colors duration-150 hover:border-border-strong has-[:checked]:border-up-maroon has-[:checked]:bg-maroon-tint/40"
+              >
+                <input
+                  type="radio"
+                  name="graduated"
+                  checked={state.graduated === v}
+                  aria-invalid={i === 0 && !!gradError ? true : undefined}
+                  onChange={() => update((s) => ({ ...s, graduated: v }))}
+                  className="mt-1 size-4 shrink-0 accent-up-maroon"
+                />
+                <span>
+                  <span className="block text-body-sm font-medium">{t}</span>
+                  <span className="block text-caption text-muted-foreground">{d}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          {gradError && (
+            <p id="graduated-error" className="mt-2 flex items-start gap-1.5 text-caption text-up-maroon">
+              <WarningCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
+              {gradError}
+            </p>
+          )}
+        </fieldset>
       )}
 
       <StepNav onBack={onBack} onNext={next} />

@@ -1,6 +1,6 @@
 import { useEffect, type CSSProperties } from 'react'
 import { Compass, HandHeart, LockSimple } from '@phosphor-icons/react'
-import { FaceSunflower } from '@/components/ascii'
+import { HeroSunflower } from '@/components/ascii'
 import { Term, GLOSSARY } from '@/components/Term'
 import { Button } from '@/components/ui/button'
 import { Wordmark } from '@/components/Wordmark'
@@ -41,7 +41,6 @@ export function Landing() {
       <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-14 pb-16 sm:px-6 sm:pt-24 md:grid-cols-[1.25fr_1fr] md:pb-28">
         <div>
           <Wordmark />
-          <p className="meta-label mt-4">// be loud // be a laude //</p>
           <h1 className="mt-10 max-w-[18ch] text-[2.25rem] sm:text-[3.5rem]">
             Don’t just compute your GWA. Plan it.
           </h1>
@@ -56,11 +55,10 @@ export function Landing() {
             <p className="text-sm text-muted-foreground">No sign-up. Your grades stay on your device.</p>
           </div>
         </div>
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex justify-center">
           <Ambient>
-            <FaceSunflower value={1.45} />
+            <HeroSunflower />
           </Ambient>
-          <p className="meta-label">Magna: final GWA of 1.45 or better</p>
         </div>
       </section>
 

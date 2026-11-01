@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { fmt } from '@/lib/copy'
 import type { Results } from '@/lib/results'
-import type { Semester } from '@/lib/state'
+import { rules } from '@/lib/rules'
+import { semesterLabel, type Semester } from '@/lib/state'
 
 const HEIGHT = 300
-const PAD = { top: 44, right: 16, bottom: 52, left: 48 }
+// The right margin holds the honors cutoff labels, clear of the data.
+const PAD = { top: 44, right: 68, bottom: 52, left: 48 }
 
 /** Two-line column label from the study plan ("3rd year, 1st sem" becomes Y3 / S1), else from the term. */
 function columnLabel(s: Semester): [string, string] {
@@ -16,9 +18,15 @@ function columnLabel(s: Semester): [string, string] {
 
 interface Column {
   label: [string, string]
+  /** Full name for the tooltip, e.g. "1st sem, AY 2024–25 (2nd year, 1st sem)". */
+  name: string
   kind: 'past' | 'target' | 'planned'
   value: number | null
+  /** Overall GWA after this semester (semesters done only). */
+  overall: number | null
 }
+
+const fullName = (s: Semester) => (s.yearLabel ? `${semesterLabel(s)} (${s.yearLabel})` : semesterLabel(s))
 
 /** A y-range fitted to the data (lower GWA on top), so differences of a few hundredths are visible. */
 function fitDomain(values: number[]): { lo: number; hi: number; step: number } {
@@ -48,23 +56,41 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
     return () => ro.disconnect()
   }, [])
 
+  const [hover, setHover] = useState<number | null>(null)
   const focus = res.focus
+  let points = 0
+  let units = 0
   const cols: Column[] = [
-    ...res.done.map((d) => ({ label: columnLabel(d.semester), kind: 'past' as const, value: d.totals.gwa })),
+    ...res.done.map((d) => {
+      points += d.totals.points
+      units += d.totals.units
+      return {
+        label: columnLabel(d.semester),
+        name: fullName(d.semester),
+        kind: 'past' as const,
+        value: d.totals.gwa,
+        overall: units > 0 ? points / units : null,
+      }
+    }),
     ...res.upcoming.map((u, i) => {
       const t = focus?.plan.semesters[i]
       return {
         label: columnLabel(u.semester),
+        name: fullName(u.semester),
         kind: t?.planned ? ('planned' as const) : ('target' as const),
         value: t && Number.isFinite(t.target) ? t.target : null,
+        overall: null,
       }
     }),
   ]
+  const pastCount = res.done.length
   const plottable = (v: number | null): v is number => v !== null && v >= 1 && v <= 5
-  const values = cols.map((c) => c.value).filter(plottable)
+  const values = cols.flatMap((c) => [c.value, c.overall]).filter(plottable)
   if (cols.length === 0 || values.length === 0) return null
 
-  const { lo, hi, step } = fitDomain(values)
+  // Honors cutoffs near the data become reference lines, so every point reads against the honors.
+  const near = rules.latinHonors.filter((t) => t.maxGwa >= Math.min(...values) - 0.3 && t.maxGwa <= Math.max(...values) + 0.3)
+  const { lo, hi, step } = fitDomain([...values, ...near.map((t) => t.maxGwa)])
   const innerW = width - PAD.left - PAD.right
   const innerH = HEIGHT - PAD.top - PAD.bottom
   const colW = innerW / cols.length
@@ -74,10 +100,18 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
   const ticks: number[] = []
   for (let t = lo; t <= hi + 1e-9; t += step) ticks.push(Math.round(t * 100) / 100)
 
-  const pastCount = res.done.length
   const pastPts = cols
     .map((c, i) => (c.kind === 'past' && plottable(c.value) ? `${cx(i)},${y(c.value)}` : null))
     .filter((p): p is string => p !== null)
+  const overallPts = cols
+    .map((c, i) => (plottable(c.overall) ? `${cx(i)},${y(c.overall)}` : null))
+    .filter((p): p is string => p !== null)
+  // The overall line only adds something once it differs from the semester dots.
+  const showOverall =
+    overallPts.length > 1 && cols.some((c) => c.kind === 'past' && c.value !== null && c.overall !== null && Math.abs(c.value - c.overall) > 0.005)
+  // A value label moves under its dot when the overall marker sits just above it.
+  const labelBelow = (c: Column) =>
+    showOverall && plottable(c.value) && plottable(c.overall) && c.overall < c.value && y(c.value) - y(c.overall) < 24
   const firstTarget = cols.findIndex((c) => c.kind === 'target' && plottable(c.value))
   const target = firstTarget >= 0 ? (cols[firstTarget].value as number) : null
   const small = colW < 40
@@ -94,7 +128,7 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
     .join('; ')
 
   return (
-    <figure ref={box} className="w-full">
+    <figure ref={box} className="relative w-full">
       <svg width={width} height={HEIGHT} role="img" aria-label={`Semester GWA chart, higher is better. ${summary}.`} className="block">
         {/* Semesters ahead sit on a light panel so "so far" and "ahead" read as two zones */}
         {pastCount < cols.length && (
@@ -121,6 +155,19 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
           </g>
         ))}
 
+        {/* Honors cutoffs: recessive dashed lines, labelled in the right margin */}
+        {near.map((t) => (
+          <g key={t.id}>
+            <line x1={PAD.left} x2={width - PAD.right} y1={y(t.maxGwa)} y2={y(t.maxGwa)} stroke="var(--hairline-strong)" strokeDasharray="4 4" />
+            <text x={width - PAD.right + 6} y={y(t.maxGwa) - 2} className="fill-[var(--text-muted)] text-label">
+              <tspan>{t.short}</tspan>
+              <tspan x={width - PAD.right + 6} dy={13} className="tabular">
+                {t.maxGwa.toFixed(2)}
+              </tspan>
+            </text>
+          </g>
+        ))}
+
         {/* Target: one maroon line, its better side shaded */}
         <g className="seq-fade" style={d}>
           {cols.map((c, i) =>
@@ -138,6 +185,16 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
           )}
         </g>
 
+        {/* Overall GWA after each semester: dashed with hollow markers; the legend and tooltip name it */}
+        {showOverall && (
+          <g className="seq-fade" style={d}>
+            <polyline points={overallPts.join(' ')} fill="none" stroke="var(--text-muted)" strokeWidth={2} strokeDasharray="5 4" />
+            {cols.map((c, i) =>
+              plottable(c.overall) ? <circle key={`o${i}`} cx={cx(i)} cy={y(c.overall)} r={4} fill="var(--bg)" stroke="var(--text-muted)" strokeWidth={2} /> : null,
+            )}
+          </g>
+        )}
+
         {/* Semesters done: dots joined by a trend line, each with its GWA */}
         {pastPts.length > 1 && (
           <polyline points={pastPts.join(' ')} fill="none" stroke="var(--up-black)" strokeWidth={1.5} pathLength={1} className="chart-line" style={d} />
@@ -148,7 +205,7 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
               <circle cx={cx(i)} cy={y(c.value)} r={6} fill={c.kind === 'past' ? 'var(--up-black)' : 'var(--up-maroon)'} stroke="var(--bg)" strokeWidth={2} />
               <text
                 x={cx(i)}
-                y={y(c.value) - 12}
+                y={labelBelow(c) ? y(c.value) + 22 : y(c.value) - 12}
                 textAnchor="middle"
                 className={`${small ? 'text-label' : 'text-caption'} font-semibold tabular ${c.kind === 'past' ? 'fill-[var(--up-black)]' : 'fill-up-maroon'}`}
               >
@@ -169,12 +226,40 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
             </text>
           </g>
         ))}
+
+        {/* Hover: the whole column is the target; the hovered one gets a faint guide */}
+        {cols.map((_, i) => (
+          <g key={`h${i}`}>
+            {hover === i && <line x1={cx(i)} x2={cx(i)} y1={PAD.top} y2={base} stroke="var(--hairline-strong)" />}
+            <rect
+              x={PAD.left + colW * i}
+              y={PAD.top - 32}
+              width={colW}
+              height={innerH + 32 + PAD.bottom}
+              fill="transparent"
+              onPointerEnter={() => setHover(i)}
+              onPointerLeave={() => setHover((h) => (h === i ? null : h))}
+            />
+          </g>
+        ))}
       </svg>
+
+      {hover !== null && <Tooltip col={cols[hover]} left={cx(hover)} width={width} />}
 
       <figcaption className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-caption text-muted-foreground">
         <span className="inline-flex items-center gap-2">
           <span aria-hidden className="size-2.5 rounded-full bg-up-black" /> Your semester GWA
         </span>
+        {showOverall && (
+          <span className="inline-flex items-center gap-2">
+            <span aria-hidden className="w-5 border-t-2 border-dashed border-muted-foreground" /> Overall GWA so far
+          </span>
+        )}
+        {near.length > 0 && (
+          <span className="inline-flex items-center gap-2">
+            <span aria-hidden className="w-5 border-t border-dashed border-border-strong" /> Latin honors cutoffs
+          </span>
+        )}
         {target !== null && (
           <span className="inline-flex items-center gap-2">
             <span aria-hidden className="h-[3px] w-5 rounded-full bg-up-maroon" /> GWA to aim for; the shaded side is better
@@ -187,5 +272,33 @@ export function SemesterChart({ res, seq }: { res: Results; seq: number }) {
         )}
       </figcaption>
     </figure>
+  )
+}
+
+/** Per-semester detail on hover. Text stays in ink colors; the chart's aria-label carries the same facts. */
+function Tooltip({ col, left, width }: { col: Column; left: number; width: number }) {
+  const lines: [string, string][] = []
+  if (col.kind === 'past') {
+    lines.push(['Semester GWA', col.value !== null ? fmt.gwa(col.value) : 'No grade yet'])
+    if (col.overall !== null) lines.push(['Overall so far', fmt.gwa(col.overall)])
+  } else if (col.kind === 'planned' && col.value !== null) {
+    lines.push(['Your what-if', fmt.grade(col.value)])
+  } else if (col.value !== null) {
+    lines.push(['Aim for', col.value > 5 ? 'Any grade' : `${fmt.target(col.value)} or better`])
+  }
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute top-2 z-10 w-52 rounded-md border border-border bg-background px-3 py-2 text-caption shadow-sm"
+      style={{ left: Math.max(0, Math.min(width - 208, left - 104)) }}
+    >
+      <p className="font-medium">{col.name}</p>
+      {lines.map(([k, v]) => (
+        <p key={k} className="mt-1 flex justify-between gap-3">
+          <span className="text-muted-foreground">{k}</span>
+          <span className="tabular">{v}</span>
+        </p>
+      ))}
+    </div>
   )
 }

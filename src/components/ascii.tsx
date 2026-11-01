@@ -44,19 +44,32 @@ export function BrailleArt({ frame, className, lineStyle }: { frame: ArtFrame; c
   )
 }
 
-/** Hero sunflower with a GWA in its seed disk. Sways slowly; the number rolls in once. */
-export function FaceSunflower({ value, className }: { value: number; className?: string }) {
-  const shown = useRolling(value, 700, 400)
+/** The drawing leaves the seed disk hollow; the hero fills it with maroon seed dots in a woven pattern. */
+const SEEDED: ArtFrame = (() => {
+  const seed = ['⢕', '⡪']
+  const inDisk = (r: number, c: number) => ((r - DISK_CENTRE.row) / 3.6) ** 2 + ((c - DISK_CENTRE.col) / 9.5) ** 2 <= 1
+  const lines: string[] = []
+  const tone: string[] = []
+  SUNFLOWER.lines.forEach((line, r) => {
+    const chars = Array.from(line)
+    const tones = Array.from(SUNFLOWER.tone[r].padEnd(chars.length))
+    chars.forEach((ch, c) => {
+      if (ch === '⠀' && inDisk(r, c)) {
+        chars[c] = seed[(r + c) % 2]
+        tones[c] = 'm'
+      }
+    })
+    lines.push(chars.join(''))
+    tone.push(tones.join(''))
+  })
+  return { lines, tone }
+})()
+
+/** Hero sunflower with a seeded disk. Sways once, slowly, then rests. */
+export function HeroSunflower({ className }: { className?: string }) {
   return (
-    <div className={cn('sway relative inline-block', className)}>
-      <BrailleArt frame={SUNFLOWER} className="text-[7.5px] sm:text-label lg:text-caption" />
-      <span
-        aria-hidden
-        className="absolute -translate-x-1/2 -translate-y-1/2 font-serif text-[1.375rem] text-up-maroon tabular sm:text-[1.75rem]"
-        style={{ left: `${(DISK_CENTRE.col / DISK_CENTRE.cols) * 100}%`, top: `${(DISK_CENTRE.row / DISK_CENTRE.rows) * 100}%` }}
-      >
-        {shown.toFixed(2)}
-      </span>
+    <div className={cn('sway inline-block', className)}>
+      <BrailleArt frame={SEEDED} className="text-[7.5px] sm:text-label lg:text-caption" />
     </div>
   )
 }

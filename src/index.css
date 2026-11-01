@@ -194,6 +194,9 @@
     letter-spacing: 0;
     white-space: pre;
     margin: 0;
+    /* Its own layer makes Chrome on Windows draw the dots with grayscale antialiasing:
+       ClearType's subpixel colour fringes turn tiny dots into rainbow specks. */
+    will-change: transform;
   }
 }
 

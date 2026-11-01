@@ -628,6 +628,102 @@
       ]
     },
     {
+      "id": "bachelor-sports-science",
+      "name": "Bachelor of Sports Science",
+      "college": "College of Social Sciences",
+      "curriculum": "2025 Curriculum (approved 2025 Jun 26), effective 1st sem AY 2025-26",
+      "totalUnits": 147,
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-sports-science.pdf",
+      "retrievedOn": "2026-11-01",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 21
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 21
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 21
+        },
+        {
+          "label": "3rd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "3rd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "4th year, 1st sem",
+          "kind": "regular",
+          "units": 18,
+          "courses": [
+            {
+              "code": "SS 199",
+              "units": 3
+            }
+          ]
+        },
+        {
+          "label": "4th year, 2nd sem",
+          "kind": "regular",
+          "units": 12
+        }
+      ]
+    },
+    {
+      "id": "aa-sports-studies",
+      "name": "Associate in Arts (Sports Studies)",
+      "college": "College of Social Sciences",
+      "curriculum": "2023 Curriculum (approved 2024 Jul 23), effective 1st sem AY 2024-25",
+      "totalUnits": 78,
+      "note": "A two-year associate degree. Check with your college whether Latin honors are given for it.",
+      "source": "https://github.com/Llenoxinn/BELaude/blob/main/prospectus/upc-sports-studies.pdf",
+      "retrievedOn": "2026-11-01",
+      "verifiedBy": "",
+      "semesters": [
+        {
+          "label": "1st year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "1st year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "1st year, Midyear",
+          "kind": "midyear",
+          "units": 6
+        },
+        {
+          "label": "2nd year, 1st sem",
+          "kind": "regular",
+          "units": 18
+        },
+        {
+          "label": "2nd year, 2nd sem",
+          "kind": "regular",
+          "units": 18
+        }
+      ]
+    },
+    {
       "id": "bs-statistics",
       "name": "BS Statistics",
       "college": "College of Science",

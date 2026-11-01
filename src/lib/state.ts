@@ -29,6 +29,10 @@ export interface Semester {
   /** For upcoming semesters: expected GWA-counted units, and an optional planned GWA (what-if). */
   plannedUnits: string
   plannedGwa: string
+  /** True while `units` / `plannedUnits` hold BELaude's fill-in rather than what the student typed:
+   *  a rebuild may replace them (for example with the study plan's units). */
+  unitsAuto?: boolean
+  plannedAuto?: boolean
   /** Added by the student (extra year, midyear), so it is kept when the list is rebuilt. */
   extra?: boolean
 }
@@ -40,6 +44,10 @@ export interface AppState {
   programId: string
   custom: { totalUnits: string; semesters: string }
   batchYear: string
+  /** Asked only when every semester in the study plan is already past. */
+  graduated: boolean | null
+  /** A graduate's GWA from their transcript, to check BELaude's math against. */
+  officialGwa: string
   semesters: Semester[]
   focusTier: TierId | ''
 }
@@ -54,6 +62,8 @@ export const initialState: AppState = {
   programId: '',
   custom: { totalUnits: '', semesters: '8' },
   batchYear: '',
+  graduated: null,
+  officialGwa: '',
   semesters: [],
   focusTier: '',
 }
@@ -120,6 +130,8 @@ interface Slot {
   term: Term
   yearLabel: string
   nominalUnits: number | null
+  /** True when the units are a guess (own numbers), not read from a study plan. */
+  estimated: boolean
 }
 
 function programSlots(state: AppState, batch: number): Slot[] {
@@ -141,6 +153,7 @@ function programSlots(state: AppState, batch: number): Slot[] {
         term,
         yearLabel: sem.label,
         nominalUnits: semesterGwaUnits(sem),
+        estimated: false,
       })
       if (term === 3 || (term === 2 && program.semesters[slots.length]?.kind !== 'midyear')) ay += 1
     }
@@ -148,13 +161,23 @@ function programSlots(state: AppState, batch: number): Slot[] {
   }
   const count = Math.max(1, Math.min(20, Math.round(parseNumber(state.custom.semesters) ?? 8)))
   const t = totalUnits(state)
-  const even = t ? Math.round((t / count) * 100) / 100 : null
+  // Whole units only: 155 over 8 semesters is five 19s and three 20s (the extra ones last), never 19.38.
+  const whole = t ? Math.round(t) : null
+  const base = whole ? Math.floor(whole / count) : 0
+  const extra = whole ? whole - base * count : 0
   return Array.from({ length: count }, (_, i) => ({
     ay: batch + Math.floor(i / 2),
     term: (i % 2 === 0 ? 1 : 2) as Term,
     yearLabel: `${ordinal(Math.floor(i / 2) + 1)} year, ${termName((i % 2 === 0 ? 1 : 2) as Term)}`,
-    nominalUnits: even,
+    nominalUnits: whole ? base + (i >= count - extra ? 1 : 0) : null,
+    estimated: true,
   }))
+}
+
+/** Year of study from the batch: for batch 2022, AY 2026–27 is the 5th year. */
+export function yearLabelFor(ay: number, term: Term, batch: number | null): string {
+  if (batch === null || ay < batch) return ''
+  return `${ordinal(ay - batch + 1)} year, ${termName(term)}`
 }
 
 function ordinal(n: number): string {
@@ -198,15 +221,49 @@ export function buildSemesters(state: AppState, now = new Date()): Semester[] {
     const key = termKey(slot.ay, slot.term)
     const prev = existing.get(key)
     const units = slot.nominalUnits !== null ? String(slot.nominalUnits) : ''
+    // A guessed load is fine for planning ahead, but a finished semester needs its real units.
+    const doneUnits = slot.estimated ? '' : units
     if (prev) {
       used.add(key)
-      return { ...prev, yearLabel: slot.yearLabel, plannedUnits: prev.plannedUnits || units, units: prev.units || units }
+      // Units the student typed are kept; BELaude's own fill-ins follow the current plan.
+      const keepUnits = prev.units !== '' && !prev.unitsAuto
+      const keepPlanned = prev.plannedUnits !== '' && !prev.plannedAuto
+      return {
+        ...prev,
+        yearLabel: slot.yearLabel,
+        units: keepUnits ? prev.units : doneUnits,
+        unitsAuto: keepUnits ? prev.unitsAuto : doneUnits !== '',
+        plannedUnits: keepPlanned ? prev.plannedUnits : units,
+        plannedAuto: keepPlanned ? prev.plannedAuto : units !== '',
+      }
     }
     // Semester GWA and units are the default; entering each course is optional.
-    return blankSemester(slot.ay, slot.term, now, { yearLabel: slot.yearLabel, plannedUnits: units, units })
+    return blankSemester(slot.ay, slot.term, now, {
+      yearLabel: slot.yearLabel,
+      units: doneUnits,
+      unitsAuto: doneUnits !== '',
+      plannedUnits: units,
+      plannedAuto: units !== '',
+    })
   })
-  const kept = state.semesters.filter((s) => !used.has(termKey(s.ay, s.term)) && (hasData(s) || s.extra))
+  // Kept semesters outside the plan get their year from this batch, not from an earlier one.
+  const kept = state.semesters
+    .filter((s) => !used.has(termKey(s.ay, s.term)) && (hasData(s) || s.extra))
+    .map((s) => ({ ...s, yearLabel: yearLabelFor(s.ay, s.term, batch) }))
   return sortSemesters([...built, ...kept])
+}
+
+/**
+ * Applies the answer to "Have you graduated?". A graduate keeps only semesters already taken; a
+ * student still studying gets the term in progress (or the next regular one) as a semester ahead.
+ */
+export function applyGraduated(list: Semester[], graduated: boolean, batch: number | null, now = new Date()): Semester[] {
+  if (graduated) return list.filter((s) => s.status === 'done' || hasData(s))
+  if (list.some((s) => s.status === 'upcoming')) return list
+  const cur = currentTerm(now)
+  const ahead = cur.term === 3 ? { ay: cur.ay + 1, term: 1 as Term } : cur
+  if (list.some((s) => termKey(s.ay, s.term) === termKey(ahead.ay, ahead.term))) return list
+  return sortSemesters([...list, blankSemester(ahead.ay, ahead.term, now, { status: 'upcoming', extra: true, yearLabel: yearLabelFor(ahead.ay, ahead.term, batch) })])
 }
 
 /** Next free term after the last semester, for "add a semester". */
@@ -229,7 +286,10 @@ export function nextTerm(list: Semester[], midyear: boolean): { ay: number; term
 export function loadState(): AppState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? parseImport(raw) : null
+    if (!raw) return null
+    const state = parseImport(raw)
+    // Saves from before fill-ins were tracked may hold a guess like 19.38: rebuild once to replace it.
+    return state.semesters.some((s) => s.unitsAuto || s.plannedAuto) ? { ...state, semesters: buildSemesters(state) } : state
   } catch {
     return null
   }
@@ -265,9 +325,17 @@ export function parseImport(text: string): AppState {
     semesters: data.semesters.map((s) => ({
       ...blankSemester(s.ay, s.term, new Date()),
       ...s,
+      // Older saves have no flags. Units are whole or half numbers, so a value like 19.38 was BELaude's guess.
+      unitsAuto: s.unitsAuto ?? notUnits(s.units),
+      plannedAuto: s.plannedAuto ?? notUnits(s.plannedUnits),
       courses: (s.courses ?? []).map((c) => ({ ...c, expectedGrade: c.expectedGrade ?? '' })),
     })),
   }
+}
+
+function notUnits(value: string | undefined): boolean {
+  const n = Number(value)
+  return !!value && Number.isFinite(n) && !Number.isInteger(n * 2)
 }
 
 export function exportFileName(): string {

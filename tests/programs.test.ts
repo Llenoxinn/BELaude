@@ -40,6 +40,8 @@ describe('UP Cebu programs', () => {
       'bs-mathematics': 150,
       'ba-political-science': 144,
       'ba-psychology': 142,
+      'bachelor-sports-science': 147,
+      'aa-sports-studies': 78,
       'bs-statistics': 140,
     })
   })

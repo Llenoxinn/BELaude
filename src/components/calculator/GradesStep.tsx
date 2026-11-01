@@ -5,13 +5,14 @@ import { GLOSSARY, Term } from '@/components/Term'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { fmt } from '@/lib/copy'
 import { semestralStanding, semesterTotals } from '@/lib/gwa'
 import { ALL_GRADES, NUMERIC_GRADES, classifyCourse, isFailingGrade, rules } from '@/lib/rules'
-import { blankSemester, newId, nextTerm, parseNumber, semesterLabel, sortSemesters, type Course, type Semester } from '@/lib/state'
+import { blankSemester, newId, nextTerm, parseNumber, semesterLabel, sortSemesters, yearLabelFor, type Course, type Semester } from '@/lib/state'
 import { useStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import { gradesIssues, type SemesterIssues } from '@/lib/validate'
@@ -48,16 +49,23 @@ export function GradesStep({ onBack, onNext }: { onBack: () => void; onNext: () 
     setMoved(sem.id)
   }
 
-  const remove = (sem: Semester) => {
-    const hasData = sem.gwa || sem.courses.some((c) => c.grade)
-    if (hasData && !window.confirm(`Remove ${semesterLabel(sem)} and the grades in it?`)) return
+  // Only a finished semester with grades in it asks first; an empty or planned one goes straight away.
+  const [confirming, setConfirming] = useState<Semester | null>(null)
+  const drop = (sem: Semester) => {
     update((s) => ({ ...s, semesters: s.semesters.filter((x) => x.id !== sem.id) }))
+    // The remove button goes with the row, so focus moves to the step heading instead of the page.
+    requestAnimationFrame(() => scope.current?.querySelector<HTMLElement>('[data-step-title]')?.focus())
+  }
+  const remove = (sem: Semester) => {
+    const hasGrades = sem.status === 'done' && (sem.gwa || sem.courses.some((c) => c.grade))
+    if (hasGrades) setConfirming(sem)
+    else drop(sem)
   }
 
   const add = (midyear: boolean) =>
     update((s) => {
       const { ay, term } = nextTerm(s.semesters, midyear)
-      return { ...s, semesters: sortSemesters([...s.semesters, blankSemester(ay, term, new Date(), { status: 'upcoming', extra: true })]) }
+      return { ...s, semesters: sortSemesters([...s.semesters, blankSemester(ay, term, new Date(), { status: 'upcoming', extra: true, yearLabel: yearLabelFor(ay, term, parseNumber(s.batchYear)) })]) }
     })
 
   const next = () => {
@@ -147,6 +155,18 @@ export function GradesStep({ onBack, onNext }: { onBack: () => void; onNext: () 
         nextLabel="See my roadmap"
         error={issueCount ? `Check the highlighted ${issueCount === 1 ? 'semester' : `${issueCount} semesters`} before continuing.` : null}
       />
+
+      <ConfirmDialog
+        open={confirming !== null}
+        title={confirming ? `Remove ${semesterLabel(confirming)}?` : ''}
+        description="The grades you entered for it will be deleted from this device."
+        confirmLabel="Remove semester"
+        onCancel={() => setConfirming(null)}
+        onConfirm={() => {
+          if (confirming) drop(confirming)
+          setConfirming(null)
+        }}
+      />
     </Card>
   )
 }
@@ -230,7 +250,7 @@ function UpcomingRow({
             value={s.plannedUnits}
             aria-invalid={!!error}
             aria-describedby={error ? `${id}-error` : PLANNED_HINT}
-            onChange={(e) => onChange({ plannedUnits: e.target.value })}
+            onChange={(e) => onChange({ plannedUnits: e.target.value, plannedAuto: false })}
           />
           <span aria-hidden className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-caption text-muted-foreground">
             units
@@ -306,7 +326,7 @@ function SemesterBlock({
                 className="tabular"
                 value={s.units}
                 aria-invalid={!!issues?.units}
-                onChange={(e) => onChange({ units: e.target.value })}
+                onChange={(e) => onChange({ units: e.target.value, unitsAuto: false })}
               />
             </Field>
           </div>

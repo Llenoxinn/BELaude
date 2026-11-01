@@ -84,10 +84,13 @@ function courseInputs(s: Semester) {
 
 export function computeResults(app: AppState, r: Rules = defaultRules): Results {
   const errors: string[] = []
-  const T = totalUnits(app) ?? 0
-  if (!T) errors.push('Enter the total units of your program first.')
-
   const sorted = sortSemesters(app.semesters)
+  // A graduate's record is complete as entered, even when it differs from the study plan's total
+  // (other electives, a shift, extra courses): their final GWA is simply everything they took.
+  const finished = app.graduated === true && !sorted.some((s) => s.status === 'upcoming')
+  const T = totalUnits(app) ?? 0
+  if (!T && !finished) errors.push('Enter the total units of your program first.')
+
   const done: DoneSemester[] = sorted
     .filter((s) => s.status === 'done')
     .map((s) => {
@@ -111,8 +114,8 @@ export function computeResults(app: AppState, r: Rules = defaultRules): Results 
   const cum = cumulative(done.map((d) => d.totals))
   const U = cum.units
   const P = cum.points
-  if (T && U > T + 1e-9) errors.push(`You’ve entered ${U} counted units, more than your program’s ${T}. Check your units or the program total.`)
-  const R = Math.max(0, T - U)
+  if (T && U > T + 1e-9 && !finished) errors.push(`You’ve entered ${U} counted units, more than your program’s ${T}. Check your units or the program total.`)
+  const R = finished ? 0 : Math.max(0, T - U)
 
   const upcomingSems = sorted.filter((s) => s.status === 'upcoming')
   const nominal = upcomingSems.map((s) => parseNumber(s.plannedUnits) ?? 0)
@@ -147,7 +150,7 @@ export function computeResults(app: AppState, r: Rules = defaultRules): Results 
   let safety: TierResult | null = null
   let stretch: TierResult | null = null
   const candidates = tiers.filter((t) => ATTAINABLE.includes(t.status))
-  if (R <= 0 && T) {
+  if ((R <= 0 && T) || finished) {
     state = 'done'
     main = tiers.find((t) => t.status === 'achieved') ?? null
   } else if (candidates.length === 0) {
