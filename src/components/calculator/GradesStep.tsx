@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Plus, Trash, WarningCircle } from '@phosphor-icons/react'
+import { CheckCircle, Plus, Trash, WarningCircle } from '@phosphor-icons/react'
 import { Field, StepNav, useFocusFirstInvalid } from './Field'
 import { GLOSSARY, Term } from '@/components/Term'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +11,7 @@ import { NativeSelect } from '@/components/ui/native-select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { fmt } from '@/lib/copy'
 import { semestralStanding, semesterTotals } from '@/lib/gwa'
+import { unitsTally } from '@/lib/results'
 import { ALL_GRADES, NUMERIC_GRADES, classifyCourse, isFailingGrade, rules } from '@/lib/rules'
 import { blankSemester, newId, nextTerm, parseNumber, semesterLabel, sortSemesters, yearLabelFor, type Course, type Semester } from '@/lib/state'
 import { useStore } from '@/lib/store'
@@ -68,11 +69,21 @@ export function GradesStep({ onBack, onNext }: { onBack: () => void; onNext: () 
       return { ...s, semesters: sortSemesters([...s.semesters, blankSemester(ay, term, new Date(), { status: 'upcoming', extra: true, yearLabel: yearLabelFor(ay, term, parseNumber(s.batchYear)) })]) }
     })
 
+  // Every semester's units must add up to the program total (a graduate's record is complete as entered)
+  const tally = unitsTally(state)
+  const finished = state.graduated === true && upcoming.length === 0
+  const unitsOff = !finished && !tally.matches
+  const unitsError = tried && unitsOff && tally.total !== null ? unitsMessage(tally.sum, tally.total) : null
+
   const next = () => {
     setTried((n) => n + 1)
     const found = gradesIssues(state)
     if (Object.keys(found).length) {
       document.getElementById(`sem-${Object.keys(found)[0]}`)?.scrollIntoView({ block: 'center' })
+      return
+    }
+    if (unitsOff) {
+      document.getElementById('units-tally')?.scrollIntoView({ block: 'center' })
       return
     }
     onNext()
@@ -140,6 +151,31 @@ export function GradesStep({ onBack, onNext }: { onBack: () => void; onNext: () 
         </section>
       )}
 
+      {!finished && tally.total !== null && (
+        <div
+          id="units-tally"
+          className={cn('mt-8 rounded-lg px-4 py-3 text-body-sm', unitsError ? 'bg-maroon-tint/60' : 'bg-surface-alt')}
+        >
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 tabular">
+            <span className="text-muted-foreground">Units in your GWA:</span>
+            <span>
+              {fmt.units(tally.done)} finished + {fmt.units(tally.planned)} still to take ={' '}
+              <strong className={cn('font-semibold', unitsError && 'text-up-maroon')}>{fmt.units(tally.sum)}</strong> of{' '}
+              {fmt.units(tally.total)}
+            </span>
+            {tally.matches && (
+              <span className="inline-flex items-center gap-1 text-up-green">
+                <CheckCircle aria-hidden weight="fill" className="size-4" /> Adds up
+              </span>
+            )}
+          </p>
+          {/* Neutral while the student is still typing; red once they try to continue */}
+          {!tally.matches && (
+            <p className={cn('mt-1 text-caption', unitsError ? 'text-up-maroon' : 'text-muted-foreground')}>{unitsMessage(tally.sum, tally.total)}</p>
+          )}
+        </div>
+      )}
+
       <div className="mt-6 flex flex-wrap gap-3">
         <Button variant="outline" size="sm" onClick={() => add(false)}>
           <Plus aria-hidden /> Add a semester
@@ -156,7 +192,9 @@ export function GradesStep({ onBack, onNext }: { onBack: () => void; onNext: () 
         onBack={onBack}
         onNext={next}
         nextLabel="See my roadmap"
-        error={issueCount ? `Check the highlighted ${issueCount === 1 ? 'semester' : `${issueCount} semesters`} before continuing.` : null}
+        error={
+          issueCount ? `Check the highlighted ${issueCount === 1 ? 'semester' : `${issueCount} semesters`} before continuing.` : unitsError
+        }
       />
 
       <ConfirmDialog
@@ -175,6 +213,13 @@ export function GradesStep({ onBack, onNext }: { onBack: () => void; onNext: () 
 }
 
 const PLANNED_HINT = 'planned-hint'
+
+function unitsMessage(sum: number, total: number): string {
+  const diff = Math.round(Math.abs(total - sum) * 100) / 100
+  return sum < total
+    ? `${fmt.units(diff)} units short of your program’s ${fmt.units(total)}. Add them to a semester, or fix the total in step 1.`
+    : `${fmt.units(diff)} units over your program’s ${fmt.units(total)}. Take them off a semester, or fix the total in step 1.`
+}
 
 function GroupTitle({ id, count, children }: { id: string; count: number; children: ReactNode }) {
   return (

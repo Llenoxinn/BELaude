@@ -4,11 +4,8 @@ import { cn } from '@/lib/utils'
 const LINES: { text: string; style: CSSProperties; className: string }[] = [
   { text: 'BE LOUD', style: { '--wm-bg': 'var(--up-maroon)' } as CSSProperties, className: 'text-white' },
   { text: 'BE A', style: { '--wm-bg': 'var(--up-green)' } as CSSProperties, className: 'text-white' },
-  {
-    text: 'LAUDE',
-    style: { '--wm-bg': 'var(--bg)', '--wm-border': '1.5px solid var(--up-black)' } as CSSProperties,
-    className: 'text-up-black',
-  },
+  // Maroon, green, gold: UP's colours, ending on the gold of the honor itself
+  { text: 'LAUDE', style: { '--wm-bg': 'var(--up-gold)' } as CSSProperties, className: 'text-up-black' },
 ]
 
 /**

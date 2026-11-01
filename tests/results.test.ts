@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeResults } from '@/lib/results'
+import { computeResults, unitsTally } from '@/lib/results'
 import { applyGraduated, blankSemester, buildSemesters, initialState, parseImport, type AppState, type Term } from '@/lib/state'
 
 const now = new Date(2026, 9, 31)
@@ -187,5 +187,18 @@ describe('units filled in by BELaude', () => {
     const parsed = parseImport(JSON.stringify(old))
     expect(parsed.semesters[0].unitsAuto).toBe(true)
     expect(buildSemesters(parsed, now)[0].units).not.toBe('19.38')
+  })
+})
+
+describe('unitsTally', () => {
+  it('adds finished and planned units against the program total', () => {
+    const t = unitsTally(stateWith('1.50', '150', 5)) // 60 done + 5 × 18 planned
+    expect(t).toMatchObject({ done: 60, planned: 90, sum: 150, total: 150, matches: true })
+  })
+
+  it('flags a total the semesters do not add up to', () => {
+    const t = unitsTally(stateWith('1.50', '155', 5))
+    expect(t.sum).toBe(150)
+    expect(t.matches).toBe(false)
   })
 })

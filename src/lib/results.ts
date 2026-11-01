@@ -224,3 +224,15 @@ function round2(n: number): number {
 }
 
 export type { TierId }
+
+/**
+ * Units in the GWA across every semester (finished ones as entered, the rest as planned) against
+ * the program's total. They must add up before the roadmap can be trusted.
+ */
+export function unitsTally(app: AppState): { done: number; planned: number; sum: number; total: number | null; matches: boolean } {
+  const done = computeResults(app).U
+  const planned = app.semesters.filter((s) => s.status === 'upcoming').reduce((a, s) => a + (parseNumber(s.plannedUnits) ?? 0), 0)
+  const total = totalUnits(app)
+  const sum = Math.round((done + planned) * 100) / 100
+  return { done, planned, sum, total, matches: total === null || Math.abs(sum - total) < 1e-6 }
+}

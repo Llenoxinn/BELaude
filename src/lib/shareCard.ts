@@ -130,7 +130,7 @@ export async function renderShareCard(res: Results): Promise<Blob | null> {
   const lines = [
     { text: 'BE LOUD', bg: C.maroon, fg: '#FFFFFF', border: false },
     { text: 'BE A', bg: C.green, fg: '#FFFFFF', border: false },
-    { text: 'LAUDE', bg: '#FFFFFF', fg: C.black, border: true },
+    { text: 'LAUDE', bg: C.gold, fg: C.black, border: false },
   ]
   ctx.font = `22px ${FONTS.pixel}`
   lines.forEach((l, i) => {
