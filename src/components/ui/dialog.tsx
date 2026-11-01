@@ -66,6 +66,7 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel,
+  cancelLabel = 'Cancel',
   onConfirm,
   onCancel,
 }: {
@@ -73,6 +74,7 @@ export function ConfirmDialog({
   title: string
   description?: ReactNode
   confirmLabel: string
+  cancelLabel?: string
   onConfirm: () => void
   onCancel: () => void
 }) {
@@ -80,7 +82,7 @@ export function ConfirmDialog({
     <Dialog open={open} onClose={onCancel} title={title} description={description}>
       <div className="mt-6 flex flex-wrap justify-end gap-3">
         <Button variant="outline" autoFocus onClick={onCancel}>
-          Cancel
+          {cancelLabel}
         </Button>
         <Button className="bg-up-maroon hover:bg-accent-hover" onClick={onConfirm}>
           {confirmLabel}

@@ -5,6 +5,7 @@ import { ReportButton } from '@/components/ReportDialog'
 import { GLOSSARY, Term } from '@/components/Term'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { campuses, notCounted, programGwaUnits } from '@/lib/programs'
@@ -25,6 +26,16 @@ export function ProgramStep({ onNext }: { onNext: () => void }) {
   const errors = tried ? programErrors(state) : {}
 
   const setCustom = (patch: Partial<typeof state.custom>) => update((s) => ({ ...s, custom: { ...s.custom, ...patch } }))
+
+  // Grades belong to the student, so a program switch keeps them, but it asks: someone trying out
+  // another program usually wants a clean slate.
+  const hasGrades = state.semesters.some((x) => x.gwa.trim() !== '' || x.plannedGwa.trim() !== '' || x.courses.some((c) => c.grade !== ''))
+  const [askFresh, setAskFresh] = useState(false)
+  const changeProgram = (patch: { campusId?: string; programId: string }) => {
+    const changed = patch.programId !== state.programId || (patch.campusId !== undefined && patch.campusId !== state.campusId)
+    update((s) => ({ ...s, ...patch }))
+    if (changed && hasGrades) setAskFresh(true)
+  }
 
   const useOwnNumbers = () => {
     if (!program) return
@@ -58,7 +69,7 @@ export function ProgramStep({ onNext }: { onNext: () => void }) {
           <NativeSelect
             id="campus"
             value={state.campusId}
-            onChange={(e) => update((s) => ({ ...s, campusId: e.target.value, programId: '' }))}
+            onChange={(e) => changeProgram({ campusId: e.target.value, programId: '' })}
           >
             {campuses.map((c) => (
               <option key={c.campusId} value={c.campusId}>
@@ -71,7 +82,7 @@ export function ProgramStep({ onNext }: { onNext: () => void }) {
 
         {campus && campus.programs.length > 0 && (
           <Field id="program" label="Degree program">
-            <NativeSelect id="program" value={state.programId} onChange={(e) => update((s) => ({ ...s, programId: e.target.value }))}>
+            <NativeSelect id="program" value={state.programId} onChange={(e) => changeProgram({ programId: e.target.value })}>
               <option value="">Choose your program, or enter your own numbers below</option>
               {campus.programs.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -136,6 +147,19 @@ export function ProgramStep({ onNext }: { onNext: () => void }) {
       </div>
 
       <StepNav onNext={next} />
+
+      <ConfirmDialog
+        open={askFresh}
+        title="Keep the grades you entered?"
+        description="You switched programs, and your grades are still saved. Keep them for the new program, or start fresh with an empty list. Your batch year stays either way."
+        cancelLabel="Keep my grades"
+        confirmLabel="Start fresh"
+        onCancel={() => setAskFresh(false)}
+        onConfirm={() => {
+          setAskFresh(false)
+          update((s) => ({ ...s, semesters: [], graduated: null, officialGwa: '', focusTier: '' }))
+        }}
+      />
     </Card>
   )
 }

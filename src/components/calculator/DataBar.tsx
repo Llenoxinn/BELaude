@@ -1,14 +1,14 @@
 import { useRef, useState } from 'react'
-import { DownloadSimple, UploadSimple } from '@phosphor-icons/react'
+import { ArrowCounterClockwise, DownloadSimple, UploadSimple } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/dialog'
 import { exportFileName, parseImport } from '@/lib/state'
 import { useStore } from '@/lib/store'
-import { downloadBlob } from '@/lib/utils'
+import { cn, downloadBlob } from '@/lib/utils'
 
 /** Autosave note plus Export / Import / Start over. Data lives only on this device, so backups matter. */
 export function DataBar() {
-  const { state, replace, reset, savedTick, storageOk } = useStore()
+  const { state, replace, savedTick, storageOk } = useStore()
   const file = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -27,8 +27,6 @@ export function DataBar() {
     }
     if (file.current) file.current.value = ''
   }
-
-  const [confirming, setConfirming] = useState(false)
 
   return (
     <div className="mt-10 rounded-lg bg-surface-alt p-5 text-sm">
@@ -50,27 +48,39 @@ export function DataBar() {
           <Button variant="outline" size="sm" onClick={() => file.current?.click()}>
             <UploadSimple aria-hidden /> Import
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setConfirming(true)}>
-            Start over
-          </Button>
+          <StartOver />
           <input ref={file} type="file" accept="application/json,.json" className="hidden" onChange={(e) => importData(e.target.files?.[0])} />
         </div>
       </div>
-      <ConfirmDialog
-        open={confirming}
-        title="Start over?"
-        description="This clears everything you entered on this device. Export a backup first if you want to keep it."
-        confirmLabel="Clear everything"
-        onCancel={() => setConfirming(false)}
-        onConfirm={() => {
-          setConfirming(false)
-          reset()
-        }}
-      />
       {/* Rendered before it has text, so screen readers announce each update */}
       <p role="status" className="mt-2 text-caption text-muted-foreground empty:mt-0">
         {message}
       </p>
     </div>
+  )
+}
+
+/** Clears everything entered on this device, after asking. Shown at the top of the calculator and in this bar. */
+export function StartOver({ className, prominent = false }: { className?: string; prominent?: boolean }) {
+  const { reset } = useStore()
+  const [confirming, setConfirming] = useState(false)
+  return (
+    <>
+      <Button variant={prominent ? 'outline' : 'ghost'} size="sm" className={cn(className)} onClick={() => setConfirming(true)}>
+        <ArrowCounterClockwise aria-hidden /> Start over
+      </Button>
+      <ConfirmDialog
+        open={confirming}
+        title="Start over?"
+        description="This clears your program, batch and every grade you entered on this device. Export a backup first if you want to keep them."
+        confirmLabel="Clear everything"
+        onCancel={() => setConfirming(false)}
+        onConfirm={() => {
+          setConfirming(false)
+          reset()
+          window.scrollTo({ top: 0 })
+        }}
+      />
+    </>
   )
 }

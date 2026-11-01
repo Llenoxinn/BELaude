@@ -39,6 +39,7 @@ describe('UP Cebu programs', () => {
       'bs-management-finance': 148,
       'bs-management-marketing': 148,
       'bs-mathematics': 150,
+      'bachelor-physical-education': 147,
       'ba-political-science': 144,
       'ba-psychology': 142,
       'bachelor-sports-science': 147,

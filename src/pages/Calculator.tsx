@@ -1,5 +1,5 @@
 import { BatchStep } from '@/components/calculator/BatchStep'
-import { DataBar } from '@/components/calculator/DataBar'
+import { DataBar, StartOver } from '@/components/calculator/DataBar'
 import { GradesStep } from '@/components/calculator/GradesStep'
 import { ProgramStep } from '@/components/calculator/ProgramStep'
 import { ResultsView } from '@/components/calculator/Results'
@@ -13,6 +13,8 @@ import { useEffect, useRef } from 'react'
 export function Calculator() {
   const { state, update } = useStore()
   const max = maxStep(state)
+  // Something to clear: shown at the top, where people look, not only in the bar at the bottom
+  const started = state.programId !== '' || state.batchYear !== '' || state.semesters.length > 0 || state.custom.totalUnits !== ''
   const step = Math.min(state.step, max)
 
   // Each step remounts; move focus to its heading so keyboard and screen-reader users land on it.
@@ -33,6 +35,11 @@ export function Calculator() {
     // The grades step widens on laptops so two semesters fit side by side
     <main id="main" tabIndex={-1} className={cn('mx-auto max-w-3xl px-4 pt-8 sm:px-6 sm:pt-12', step === 2 && 'lg:max-w-6xl')}>
       <div className="mx-auto max-w-3xl">
+        {started && (
+          <div className="mb-3 flex justify-end">
+            <StartOver prominent />
+          </div>
+        )}
         <Stepper current={step} max={max} onSelect={go} />
       </div>
       <div key={step} className="step-in mt-8 sm:mt-10">
